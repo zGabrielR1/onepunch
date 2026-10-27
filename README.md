@@ -42,6 +42,13 @@ examples that the user can change; this version does not generate adaptive plans
 
 ## Try the already built versions
 
+Current prerelease pipeline: run **Hosted prerelease** from GitHub Actions. Android
+compilation, JVM/Go/web/browser checks and packaging run on GitHub-hosted Ubuntu,
+not the development PC. Publication is blocked when a check fails. The release
+contains a debug-signed test APK, Linux API/web bundle, checksums and verification
+metadata tied to the exact commit. See [RC1 notes](docs/releases/v0.2.0-rc.1.md)
+for signing/update limitations. Device UI QA remains separate.
+
 The build artifacts on this checkout are:
 
 - `build/onepunch-debug.apk` — installable Android debug build, Android 8+.

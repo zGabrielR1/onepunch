@@ -5,6 +5,12 @@ Português (Brasil), kg, with React web companion and personal Go sync API.
 Implement and review source here. Compilation, JVM/device testing and APK
 generation belong on the owner's other machine. Do not substitute web-only work.
 
+Owner now requested a release. Prepared v0.2.0-rc.1 and a manual GitHub-hosted
+release workflow: compile/check/package remotely, publish only after checks pass.
+Local compilation stays prohibited. Hosted verification/release is pending;
+never substitute the older local APK for the new source. Notes include the
+ephemeral debug-signing update limitation and unverified Android device UI.
+
 Latest expansion: shared catalog now has 27 exercises and nine routine examples,
 each with seven distinct exercises. Native and web Modelos prontos expose the
 full library to existing users through fresh editable copies, preserving all

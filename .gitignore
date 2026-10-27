@@ -6,6 +6,8 @@ android/.kotlin/
 android/**/build/
 android/local.properties
 build/
+build-go-tests.json
+build-browser-checks.txt
 server/data/
 *.log
 .env

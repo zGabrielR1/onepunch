@@ -1,5 +1,18 @@
 # Progress
 
+## 2026-10-27 — hosted prerelease preparation
+
+- Owner requested a release. Added a manual GitHub-hosted Ubuntu pipeline for
+  Android compilation/JVM tests, web/Go/browser checks, signed-APK verification,
+  Linux companion packaging and checksums/verification metadata. No local builds.
+- Versioned native/web source as 0.2.0-rc.1 (Android code 2). Publication is gated
+  on all checks and must use the checked workflow commit, never the older APK.
+- Added Portuguese release notes, exact-source verification manifest and signing
+  limitations for ephemeral debug certificates. Native device UI QA stays separate.
+- Corrected the remaining browser sync routine-count expectation for nine seeds.
+- GitHub repository is private and Actions is enabled; no visibility change.
+  Hosted checks and publication were pending when this source commit was prepared.
+
 ## 2026-10-27 — expanded routine and exercise library
 
 - Expanded three four-exercise seed routines to nine seven-exercise examples:

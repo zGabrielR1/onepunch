@@ -1,0 +1,112 @@
+name: Hosted prerelease
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: onepunch-prerelease
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  RELEASE_TAG: v0.2.0-rc.1
+
+jobs:
+  verify-and-release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Refuse to replace an existing release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo 'This version already exists; choose a new release version.'
+            exit 1
+          fi
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: server/go.mod
+          cache: false
+      - name: Install Android SDK packages on hosted runner
+        run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"'
+      - name: Android APK and JVM regression tests (hosted only)
+        working-directory: android
+        run: bash ./gradlew --no-daemon --max-workers=2 :app:assembleDebug :app:testDebugUnitTest
+      - name: Web domain checks and production bundle
+        run: |
+          npm ci --prefix web --no-audit --no-fund
+          node --max-old-space-size=128 scripts/check-light.mjs
+          npm run build --prefix web
+      - name: Go race checks and Linux binary
+        working-directory: server
+        run: |
+          go test -race -json ./... > ../build-go-tests.json
+          mkdir -p ../build
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -buildvcs=false -o ../build/onepunch-api .
+      - name: Install isolated browser QA tooling
+        run: |
+          npm install --prefix "$RUNNER_TEMP/browser-qa" --no-save --no-audit --no-fund playwright@1.56.1
+          node "$RUNNER_TEMP/browser-qa/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Browser workflows with disposable API data
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/browser-qa/node_modules/playwright/index.mjs
+        run: |
+          build/onepunch-api -addr 127.0.0.1:8098 -data "$RUNNER_TEMP/onepunch-qa-state.json" -catalog shared/catalog.json -web web/dist > "$RUNNER_TEMP/onepunch-api.log" 2>&1 &
+          api_pid=$!
+          trap 'kill "$api_pid"' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8098/api/health >/dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:8098/api/health
+          node scripts/check_web.mjs | tee build-browser-checks.txt
+      - name: Verify APK signature and assemble current release files
+        run: |
+          mkdir -p build/release/onepunch-linux-amd64/{server,shared,web}
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs android/app/build/outputs/apk/debug/app-debug.apk > build/release/apk-signature.txt
+          cp android/app/build/outputs/apk/debug/app-debug.apk "build/release/onepunch-$RELEASE_TAG-debug.apk"
+          cp build/onepunch-api build/release/onepunch-linux-amd64/server/
+          cp shared/catalog.json shared/routines.json shared/brand.properties build/release/onepunch-linux-amd64/shared/
+          cp -r web/dist build/release/onepunch-linux-amd64/web/
+          cp README.md build/release/onepunch-linux-amd64/
+          tar -czf "build/release/onepunch-$RELEASE_TAG-linux-amd64.tar.gz" -C build/release onepunch-linux-amd64
+          python scripts/release_manifest.py
+          cd build/release
+          sha256sum ./*.apk ./*.tar.gz verification.json apk-signature.txt > SHA256SUMS.txt
+      - name: Retain hosted verification reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: onepunch-hosted-verification
+          retention-days: 7
+          if-no-files-found: warn
+          path: |
+            android/app/build/test-results/
+            build-go-tests.json
+            build-browser-checks.txt
+            /tmp/onepunch-qa/
+            build/release/verification.json
+      - name: Publish prerelease only after all checks pass
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            --target "$GITHUB_SHA" --prerelease \
+            --title "OnePunch 0.2.0 RC1" \
+            --notes-file docs/releases/v0.2.0-rc.1.md \
+            build/release/*.apk build/release/*.tar.gz \
+            build/release/verification.json build/release/apk-signature.txt build/release/SHA256SUMS.txt

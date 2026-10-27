@@ -23,6 +23,10 @@ Read CURRENTTASK, PROGRESS.md and ARCHITECTURE.md before continuing.
 
 ## Structure and checks
 
+- Owner authorized a GitHub prerelease on 2026-10-27. Native compilation and
+  verification may run on GitHub-hosted runners, never on this development PC.
+  Use the manual Hosted prerelease workflow; publish only current checked assets.
+
 - Owner resource constraint (2026-10-27): no native compilation or APK builds.
   Native Android development and improvements remain the primary requested work;
   "build the app" means implement the app, not permission to invoke compilers.
