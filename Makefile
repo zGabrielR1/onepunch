@@ -1,6 +1,9 @@
 GO ?= go
 NPM ?= npm
-.PHONY: deps web api run dev test android
+.PHONY: deps web api run dev test check-light android
+
+check-light:
+	node --max-old-space-size=128 scripts/check-light.mjs
 
 deps:
 	$(NPM) ci --prefix web

@@ -984,6 +984,14 @@ function App() {
                 </button>
               </div>
               <div className="routine-grid">
+                <button
+                  className="create-routine-card"
+                  onClick={() => setModal({ type: "templates" })}
+                >
+                  <span><BookOpen size={26} /></span>
+                  <strong>Modelos prontos ({seeds.length})</strong>
+                  <p>Explore os exercícios e edite uma nova cópia.</p>
+                </button>
                 {routines.map((r, i) => (
                   <RoutineCard
                     key={r.id}
@@ -1007,8 +1015,8 @@ function App() {
               <div className="quiet-note">
                 <BookOpen size={18} />
                 <p>
-                  As três rotinas iniciais são modelos editáveis, não um plano
-                  personalizado. Ajuste-as à sua programação.
+                  As rotinas iniciais são modelos editáveis, não um plano
+                  personalizado. Escolha e ajuste os exercícios; não é necessário realizar todos.
                 </p>
               </div>
             </>
@@ -1545,6 +1553,37 @@ function App() {
           onSave={saveRoutine}
           onClose={() => setModal(null)}
         />
+      ) : null}
+      {modal?.type === "templates" ? (
+        <Modal title="Modelos de rotina" onClose={() => setModal(null)} wide>
+          <p className="modal-description">
+            Exemplos editáveis, não um plano personalizado. Usar modelo abre uma
+            nova cópia; suas rotinas salvas continuam iguais.
+          </p>
+          {seeds.map((template) => (
+            <details className="routine-template" key={template.id}>
+              <summary>{template.name} · {template.exercises.length} exercícios</summary>
+              <p className="modal-description">{template.note}</p>
+              <ul>
+                {template.exercises.map((spec) => (
+                  <li key={spec.exerciseId}>
+                    {exerciseById[spec.exerciseId]?.name || spec.exerciseId}
+                    {" — "}{spec.sets} × {spec.reps} · descanso {spec.restSeconds}s
+                  </li>
+                ))}
+              </ul>
+              <button
+                className="button dark full"
+                onClick={() => setModal({
+                  type: "routine",
+                  routine: { ...structuredClone(template), id: id(), archived: false, updatedAt: Date.now() },
+                })}
+              >
+                Usar modelo <Plus size={18} />
+              </button>
+            </details>
+          ))}
+        </Modal>
       ) : null}
       {modal?.type === "picker" && active ? (
         <ExercisePicker

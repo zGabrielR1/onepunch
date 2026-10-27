@@ -1,6 +1,8 @@
 // Use a fresh test API data file. This script creates its own workout records.
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
 import assert from 'node:assert/strict';import fs from 'node:fs/promises';
+const catalog=JSON.parse(await fs.readFile(new URL('../shared/catalog.json',import.meta.url),'utf8'));
+const templates=JSON.parse(await fs.readFile(new URL('../shared/routines.json',import.meta.url),'utf8'));
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||undefined,args:['--no-sandbox']});
 const url=process.env.ONEPUNCH_QA_URL||'http://127.0.0.1:8098';let checks=0;await fs.mkdir('/tmp/onepunch-qa',{recursive:true});
 for(const width of [1440,1024,768,390,320]){
@@ -19,7 +21,7 @@ for(const width of [1440,1024,768,390,320]){
  await page.getByRole('button',{name:/Supino reto.*Peito/}).click();
  await page.getByRole('button',{name:'Salvar rotina',exact:true}).click();
  const card=page.locator('.routine-card').filter({has:page.getByRole('heading',{name:'Treino QA',exact:true})});
- await card.waitFor();assert.equal(await page.locator('.routine-card').count(),4);checks++;
+ await card.waitFor();assert.equal(await page.locator('.routine-card').count(),templates.length+1);checks++;
  await card.getByRole('button',{name:'Começar treino',exact:true}).click();
  await page.getByRole('button',{name:'Finalizar treino',exact:true}).click();
  assert(await page.getByRole('button',{name:'Salvar treino',exact:true}).isDisabled());checks++;
@@ -50,9 +52,9 @@ for(const width of [1440,1024,768,390,320]){
  await page.screenshot({path:`/tmp/onepunch-qa/history-${width}.png`,fullPage:true,animations:'disabled'});
  await nav.getByRole('button',{name:'Exercícios',exact:true}).click();
  await page.getByRole('textbox',{name:'Buscar na biblioteca'}).fill('rosca');
- assert.equal(await page.locator('.exercise-card').count(),2);checks++;
+ assert.equal(await page.locator('.exercise-card').count(),catalog.filter(e=>e.name.toLocaleLowerCase('pt-BR').includes('rosca')).length);checks++;
  await page.getByRole('button',{name:'Pernas',exact:true}).click();await page.getByRole('button',{name:'Limpar busca',exact:true}).click();
- assert.equal(await page.locator('.exercise-card').count(),18);checks++;
+ assert.equal(await page.locator('.exercise-card').count(),catalog.length);checks++;
  await page.locator('.exercise-card').first().click();await page.getByRole('button',{name:'Iniciar treino com este exercício'}).click();
  await page.getByRole('button',{name:'Descartar este treino',exact:true}).click();await page.getByRole('button',{name:'Voltar ao treino',exact:true}).click();
  assert.equal(await page.getByRole('heading',{name:'Treino livre.'}).count(),1);checks++;

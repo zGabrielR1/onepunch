@@ -23,13 +23,26 @@ Read CURRENTTASK, PROGRESS.md and ARCHITECTURE.md before continuing.
 
 ## Structure and checks
 
+- Owner resource constraint (2026-10-27): no native compilation or APK builds.
+  Native Android development and improvements remain the primary requested work;
+  "build the app" means implement the app, not permission to invoke compilers.
+  Owner explicitly accepts that compilation/build-pass checks and device tests
+  remain unverified. Continue source edits and review without running those checks.
+  Do not run Gradle, Go builds/tests (tests compile), or
+  emulator/browser suites by default. Use the source-only check below. Native
+  build verification remains pending when native source changes. A JVM heap
+  setting alone does not cap total build memory or establish that a build is safe.
+- Lightweight check: `node --max-old-space-size=128 scripts/check-light.mjs`.
+  This validates shared templates/catalog and runs web domain tests serially,
+  without dependencies, bundling or compilation. The heap limit is not an OS RAM cap.
+
 - web/src/lib/model.mjs: web domain and persistence helpers; React UI in App.jsx.
 - android/app/src/main/java/app/onepunch/: Kotlin domain, JSON store and Compose UI.
 - server/: standard-library Go service with atomic JSON persistence and race tests.
 - scripts/check_web.mjs: browser checks; use an empty disposable API data file.
 - README.md: setup and rename instructions. ARCHITECTURE.md: contracts and limits.
 
-After relevant changes: npm test --prefix web; npm run build --prefix web;
+When resource constraints permit, after relevant changes: npm test --prefix web; npm run build --prefix web;
 (cd server && go test -race ./...); gofmt for Go files. Native changes require
 ./gradlew :app:assembleDebug :app:testDebugUnitTest from android/ with JDK17/SDK36.
 Report JVM/build verification separately from real Android device UI testing.

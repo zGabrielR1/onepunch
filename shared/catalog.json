@@ -124,5 +124,68 @@
     "muscle": "Peito",
     "equipment": "Peso corporal",
     "description": "Mantenha o corpo alinhado durante a flexão e a extensão dos braços."
+  },
+  {
+    "id": "leg-extension",
+    "name": "Cadeira extensora",
+    "muscle": "Pernas",
+    "equipment": "Máquina",
+    "description": "Exercício de extensão dos joelhos na máquina, com o tronco apoiado."
+  },
+  {
+    "id": "reverse-lunge",
+    "name": "Afundo para trás",
+    "muscle": "Pernas",
+    "equipment": "Halteres",
+    "description": "Variação de afundo com passo para trás. Registre as repetições por lado."
+  },
+  {
+    "id": "hip-thrust",
+    "name": "Elevação pélvica",
+    "muscle": "Pernas",
+    "equipment": "Barra",
+    "description": "Exercício de extensão do quadril com a parte superior das costas apoiada em um banco."
+  },
+  {
+    "id": "reverse-crunch",
+    "name": "Abdominal reverso",
+    "muscle": "Core",
+    "equipment": "Peso corporal",
+    "description": "Variação de abdominal deitado, aproximando os joelhos do tronco."
+  },
+  {
+    "id": "overhead-triceps",
+    "name": "Tríceps acima da cabeça",
+    "muscle": "Braços",
+    "equipment": "Halteres",
+    "description": "Extensão dos cotovelos com um halter acima da cabeça. Registre a carga total utilizada."
+  },
+  {
+    "id": "face-pull",
+    "name": "Face pull",
+    "muscle": "Ombros",
+    "equipment": "Polia",
+    "description": "Puxada com corda em direção ao rosto na polia."
+  },
+  {
+    "id": "reverse-curl",
+    "name": "Rosca inversa",
+    "muscle": "Braços",
+    "equipment": "Barra",
+    "description": "Variação de rosca com as palmas voltadas para baixo."
+  },
+  {
+    "id": "goblet-squat",
+    "name": "Agachamento goblet",
+    "muscle": "Pernas",
+    "equipment": "Halteres",
+    "description": "Variação de agachamento segurando um halter à frente do peito."
+  },
+  {
+    "id": "dumbbell-rdl",
+    "name": "Levantamento romeno com halteres",
+    "muscle": "Pernas",
+    "equipment": "Halteres",
+    "description": "Variação de levantamento romeno usando halteres. Registre a soma das cargas utilizadas."
   }
 ]

@@ -73,10 +73,10 @@ private fun clock(ms: Long): String {
     return "%02d:%02d".format(seconds / 60, seconds % 60)
 }
 
-private fun date(time: Long) =
+private fun date(time: Long, includeYear: Boolean = false) =
     Instant.ofEpochMilli(time)
         .atZone(ZoneId.systemDefault())
-        .format(DateTimeFormatter.ofPattern("d 'de' MMM", Br))
+        .format(DateTimeFormatter.ofPattern(if (includeYear) "d 'de' MMM 'de' yyyy" else "d 'de' MMM", Br))
 
 private fun day(time: Long) =
     Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()).toLocalDate()
@@ -181,15 +181,28 @@ fun OnepunchApp() {
     val context = LocalContext.current
     val store = remember { StateStore(context) }
     val initial = remember { runCatching { store.load() } }
+    val initialDraft = remember { runCatching { store.loadRoutineDraft() } }
     var state by remember { mutableStateOf(initial.getOrDefault(Workspace())) }
+    var routineDraft by remember { mutableStateOf(initialDraft.getOrNull()) }
+    var draftError by remember {
+        mutableStateOf(if (initialDraft.isFailure) "Não foi possível abrir o rascunho. O registro original foi preservado; a edição de rotinas está bloqueada para não substituí-lo." else null)
+    }
     var screen by remember { mutableStateOf(Screen.Home) }
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var picking by remember { mutableStateOf(false) }
     var editorOpen by remember { mutableStateOf(false) }
-    var editing by remember { mutableStateOf<Routine?>(null) }
+    var templateLibrary by remember { mutableStateOf(false) }
+    var archiving by remember { mutableStateOf<Routine?>(null) }
+    var showArchived by remember { mutableStateOf(false) }
     var finish by remember { mutableStateOf(false) }
+    var finishError by remember { mutableStateOf<String?>(null) }
     var discard by remember { mutableStateOf(false) }
     var removing by remember { mutableStateOf<Exercise?>(null) }
+    var removingSet by remember { mutableStateOf<WorkoutSet?>(null) }
+    var restEditing by remember { mutableStateOf<ExerciseSpec?>(null) }
+    var replacing by remember { mutableStateOf<ExerciseSpec?>(null) }
+    var replacement by remember { mutableStateOf<Exercise?>(null) }
+    var replacementError by remember { mutableStateOf<String?>(null) }
     var detail by remember { mutableStateOf<Exercise?>(null) }
     var workoutDetail by remember { mutableStateOf<Workout?>(null) }
     var syncOpen by remember { mutableStateOf(false) }
@@ -199,22 +212,97 @@ fun OnepunchApp() {
     val snackbar = remember { SnackbarHostState() }
     val catalog = store.catalog
     val lookup = remember { catalog.associateBy { it.id } }
-    fun save(next: Workspace): Boolean {
+    fun save(next: Workspace, clearDraft: Boolean = false): Boolean {
         return try {
-            store.save(next)
+            store.save(next, clearRoutineDraft = clearDraft)
             state = next
+            if (clearDraft) routineDraft = null
             true
         } catch (e: Exception) {
             scope.launch { snackbar.showSnackbar(e.message ?: "Não foi possível salvar.") }
             false
         }
     }
+    fun saveDraft(next: RoutineDraft): Boolean {
+        return try {
+            store.saveRoutineDraft(next)
+            routineDraft = next
+            draftError = null
+            true
+        } catch (e: Exception) {
+            draftError = e.message ?: "Não foi possível salvar o rascunho."
+            false
+        }
+    }
+    fun openRoutineEditor(routine: Routine?, isNew: Boolean = routine == null): Boolean {
+        if (initialDraft.isFailure) {
+            scope.launch { snackbar.showSnackbar("O rascunho original foi preservado. Não é possível substituí-lo.") }
+            return false
+        }
+        if (routineDraft != null) {
+            editorOpen = true
+            scope.launch { snackbar.showSnackbar("Retome e salve ou descarte o rascunho atual antes de editar outra rotina.") }
+            return true
+        }
+        val original = routine ?: Routine(name = "")
+        val saved = saveDraft(RoutineDraft(original = original, isNew = isNew))
+        if (saved) editorOpen = true
+        return saved
+    }
+    fun discardRoutineDraft() {
+        try {
+            store.clearRoutineDraft()
+            routineDraft = null
+            draftError = null
+            editorOpen = false
+        } catch (e: Exception) {
+            draftError = e.message ?: "Não foi possível descartar o rascunho."
+        }
+    }
+    fun finishRoutineDraft(asCopy: Boolean = false) {
+        val currentDraft = routineDraft ?: return
+        try {
+            val next = commitRoutineDraft(state, currentDraft, asCopy = asCopy)
+            if (save(next, clearDraft = true)) {
+                showArchived = if (asCopy) false else currentDraft.draft.archived
+                editorOpen = false
+                draftError = null
+            } else draftError = "A rotina não foi salva. Seu rascunho foi mantido; tente novamente."
+        } catch (e: Exception) {
+            draftError = e.message ?: "Não foi possível salvar a rotina."
+        }
+    }
     fun begin(routine: Routine?) {
         if (state.active == null) save(state.copy(active = startWorkout(routine, state.workouts)))
         screen = Screen.Training
     }
-    fun updateActive(change: (ActiveWorkout) -> ActiveWorkout) {
-        state.active?.let { save(state.copy(active = change(it))) }
+    fun updateActive(change: (ActiveWorkout) -> ActiveWorkout): Boolean {
+        val active = state.active ?: return false
+        return save(state.copy(active = change(active)))
+    }
+    fun setArchived(id: String, archived: Boolean): Boolean {
+        val current = state.routines.find { it.id == id } ?: return false
+        return save(
+            state.copy(
+                routines = state.routines.map {
+                    if (it.id == id)
+                        current.copy(
+                            archived = archived,
+                            updatedAt = maxOf(System.currentTimeMillis(), current.updatedAt + 1),
+                        )
+                    else it
+                },
+            ),
+        )
+    }
+    fun duplicateRoutine(routine: Routine) {
+        val copy = routine.copy(
+            id = uid(),
+            name = routine.name.take(72) + " (cópia)",
+            archived = false,
+            updatedAt = System.currentTimeMillis(),
+        )
+        openRoutineEditor(copy, isNew = true)
     }
     LaunchedEffect(Unit) {
         while (true) {
@@ -331,6 +419,10 @@ fun OnepunchApp() {
                                 ),
                             verticalArrangement = Arrangement.spacedBy(22.dp),
                         ) {
+                            if (routineDraft != null || draftError != null)
+                                item {
+                                    RoutineDraftNotice(routineDraft, draftError) { editorOpen = true }
+                                }
                             item {
                                 Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
                                     Eyebrow(
@@ -449,8 +541,7 @@ fun OnepunchApp() {
                                     lookup,
                                     { begin(routine) },
                                     {
-                                        editing = routine
-                                        editorOpen = true
+                                        openRoutineEditor(routine)
                                     },
                                 )
                             }
@@ -494,22 +585,71 @@ fun OnepunchApp() {
                             item {
                                 Header("Meus treinos.", "Rotinas que se encaixam no seu ritmo.")
                             }
+                            if (routineDraft != null || draftError != null)
+                                item {
+                                    RoutineDraftNotice(routineDraft, draftError) { editorOpen = true }
+                                }
                             item {
                                 PrimaryButton("Criar rotina", Icons.Outlined.Add) {
-                                    editing = null
-                                    editorOpen = true
+                                    openRoutineEditor(null)
                                 }
                             }
-                            items(state.routines.filterNot { it.archived }, key = { it.id }) {
+                            item {
+                                OutlinedButton(
+                                    onClick = { templateLibrary = true },
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    Icon(Icons.AutoMirrored.Outlined.MenuBook, null)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Modelos prontos (${store.routineTemplates.size})")
+                                }
+                            }
+                            item {
+                                Row(
+                                    Modifier.horizontalScroll(rememberScrollState()),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    FilterChip(
+                                        selected = !showArchived,
+                                        onClick = { showArchived = false },
+                                        label = { Text("Ativas (${state.routines.count { !it.archived }})") },
+                                    )
+                                    FilterChip(
+                                        selected = showArchived,
+                                        onClick = { showArchived = true },
+                                        label = { Text("Arquivadas (${state.routines.count { it.archived }})") },
+                                    )
+                                }
+                            }
+                            if (state.routines.none { it.archived == showArchived })
+                                item {
+                                    Panel {
+                                        Text(
+                                            if (showArchived) "Nenhuma rotina arquivada."
+                                            else "Suas próximas rotinas começam aqui.",
+                                            fontWeight = FontWeight.SemiBold,
+                                        )
+                                        Text(
+                                            if (showArchived)
+                                                "Ao arquivar uma rotina, você poderá restaurá-la aqui. Seu histórico continua salvo."
+                                            else "Crie uma rotina ou restaure uma das arquivadas para voltar a usá-la.",
+                                            color = Muted,
+                                            fontSize = 13.sp,
+                                        )
+                                    }
+                                }
+                            items(state.routines.filter { it.archived == showArchived }, key = { it.id }) {
                                 routine ->
                                 RoutineCard(
                                     routine,
                                     lookup,
                                     { begin(routine) },
                                     {
-                                        editing = routine
-                                        editorOpen = true
+                                        openRoutineEditor(routine)
                                     },
+                                    onDuplicate = { duplicateRoutine(routine) },
+                                    onArchive = { archiving = routine },
+                                    onRestore = { setArchived(routine.id, false) },
                                 )
                             }
                             item {
@@ -633,6 +773,7 @@ fun OnepunchApp() {
                         }
                     Screen.Training ->
                         state.active?.let { active ->
+                            val review = remember(active) { reviewWorkout(active) }
                             LazyColumn(
                                 Modifier.fillMaxSize().imePadding(),
                                 contentPadding = PaddingValues(18.dp, 16.dp, 18.dp, 30.dp),
@@ -640,10 +781,25 @@ fun OnepunchApp() {
                             ) {
                                 item {
                                     Header(
-                                        active.title,
+                                        "Treino em andamento.",
                                         "Registre a carga total utilizada. Peso corporal? Use 0 kg.",
                                     )
                                 }
+                                item {
+                                    OutlinedTextField(
+                                        value = active.title,
+                                        onValueChange = { title -> updateActive { it.copy(title = title.take(80)) } },
+                                        label = { Text("Nome deste treino") },
+                                        isError = !workoutTitleValid(active.title),
+                                        supportingText = {
+                                            if (!workoutTitleValid(active.title)) Text("Dê um nome ao treino antes de salvar.")
+                                            else Text("Mudar este nome não altera sua rotina.")
+                                        },
+                                        singleLine = true,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    )
+                                }
+                                item { WorkoutProgress(review) }
                                 item {
                                     Row(
                                         Modifier.fillMaxWidth(),
@@ -715,6 +871,7 @@ fun OnepunchApp() {
                                 items(active.exercises, key = { it.exerciseId }) { spec ->
                                     val e = lookup[spec.exerciseId] ?: return@items
                                     val previous = latestSets(state.workouts, e.id)
+                                    var exerciseMenu by remember { mutableStateOf(false) }
                                     Panel {
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
@@ -736,12 +893,77 @@ fun OnepunchApp() {
                                                     color = Muted,
                                                 )
                                             }
-                                            IconButton(onClick = { removing = e }) {
-                                                Icon(
-                                                    Icons.Outlined.Close,
-                                                    "Remover ${e.name}",
-                                                    Modifier.size(18.dp),
-                                                )
+                                            Box {
+                                                IconButton(onClick = { exerciseMenu = true }) {
+                                                    Icon(Icons.Outlined.MoreVert, "Opções de ${e.name}")
+                                                }
+                                                DropdownMenu(
+                                                    expanded = exerciseMenu,
+                                                    onDismissRequest = { exerciseMenu = false },
+                                                ) {
+                                                    DropdownMenuItem(
+                                                        text = { Text("Mover para cima") },
+                                                        enabled = active.exercises.firstOrNull()?.exerciseId != e.id,
+                                                        onClick = {
+                                                            exerciseMenu = false
+                                                            updateActive { moveWorkoutExercise(it, e.id, -1) }
+                                                        },
+                                                    )
+                                                    DropdownMenuItem(
+                                                        text = { Text("Mover para baixo") },
+                                                        enabled = active.exercises.lastOrNull()?.exerciseId != e.id,
+                                                        onClick = {
+                                                            exerciseMenu = false
+                                                            updateActive { moveWorkoutExercise(it, e.id, 1) }
+                                                        },
+                                                    )
+                                                    DropdownMenuItem(
+                                                        text = { Text("Substituir séries pendentes") },
+                                                        enabled = active.sets.none { it.exerciseId == e.id } ||
+                                                            active.sets.any { it.exerciseId == e.id && !it.done },
+                                                        onClick = {
+                                                            exerciseMenu = false
+                                                            replacement = null
+                                                            replacementError = null
+                                                            replacing = spec
+                                                        },
+                                                    )
+                                                    HorizontalDivider()
+                                                    DropdownMenuItem(
+                                                        text = { Text("Histórico do exercício") },
+                                                        onClick = {
+                                                            exerciseMenu = false
+                                                            detail = e
+                                                        },
+                                                    )
+                                                    DropdownMenuItem(
+                                                        text = { Text("Ajustar descanso") },
+                                                        onClick = {
+                                                            exerciseMenu = false
+                                                            restEditing = spec
+                                                        },
+                                                    )
+                                                    active.sets.filter { it.exerciseId == e.id }
+                                                        .forEachIndexed { index, set ->
+                                                            DropdownMenuItem(
+                                                                text = {
+                                                                    Text("Remover série ${index + 1}${if (set.done) " (concluída)" else ""}")
+                                                                },
+                                                                onClick = {
+                                                                    exerciseMenu = false
+                                                                    removingSet = set
+                                                                },
+                                                            )
+                                                        }
+                                                    HorizontalDivider()
+                                                    DropdownMenuItem(
+                                                        text = { Text("Remover exercício") },
+                                                        onClick = {
+                                                            exerciseMenu = false
+                                                            removing = e
+                                                        },
+                                                    )
+                                                }
                                             }
                                         }
                                         Row(
@@ -934,6 +1156,7 @@ fun OnepunchApp() {
                                 }
                                 item {
                                     PrimaryButton("Finalizar treino", Icons.Outlined.Check) {
+                                        finishError = null
                                         finish = true
                                     }
                                 }
@@ -986,112 +1209,173 @@ fun OnepunchApp() {
                     }
             }
         }
-        if (editorOpen)
-            RoutineEditor(
-                editing,
-                catalog,
-                onDismiss = { editorOpen = false },
-                onSave = { routine ->
-                    val saved =
-                        save(
-                            state.copy(
-                                routines =
-                                    if (state.routines.any { it.id == routine.id })
-                                        state.routines.map {
-                                            if (it.id == routine.id) routine else it
-                                        }
-                                    else state.routines + routine,
-                            ),
-                        )
-                    if (saved) editorOpen = false
+        if (templateLibrary)
+            RoutineTemplateLibrary(
+                templates = store.routineTemplates,
+                lookup = lookup,
+                error = draftError,
+                onDismiss = { templateLibrary = false },
+                onUse = { template ->
+                    if (openRoutineEditor(copyRoutineTemplate(template), isNew = true)) templateLibrary = false
                 },
             )
+        if (editorOpen)
+            routineDraft?.let { session ->
+                val current = state.routines.find { it.id == session.original.id }
+                RoutineEditor(
+                    session = session,
+                    catalog = catalog,
+                    error = draftError,
+                    conflict = if (session.isNew) current != null else current != session.original,
+                    onChange = { saveDraft(session.copy(draft = it)) },
+                    onDismiss = { discardRoutineDraft() },
+                    onKeep = { editorOpen = false },
+                    onSave = { finishRoutineDraft() },
+                    onSaveAsCopy = { finishRoutineDraft(asCopy = true) },
+                )
+            }
+        archiving?.let { routine ->
+            AlertDialog(
+                onDismissRequest = { archiving = null },
+                title = { Text("Arquivar ${routine.name}?") },
+                text = {
+                    Text("A rotina sairá da lista de treinos ativos. Você poderá restaurá-la em Arquivadas. Seu histórico e o treino em andamento serão mantidos.")
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        if (setArchived(routine.id, true)) archiving = null
+                    }) { Text("Arquivar rotina") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { archiving = null }) { Text("Manter ativa") }
+                },
+            )
+        }
         if (picking)
             ExercisePicker(
                 catalog,
                 state.active?.exercises?.map { it.exerciseId } ?: emptyList(),
-                { picking = false },
+                onDismiss = { picking = false },
             ) { exercise ->
-                updateActive { addExercise(it, ExerciseSpec(exercise.id), state.workouts) }
-                picking = false
+                if (updateActive { addExercise(it, ExerciseSpec(exercise.id), state.workouts) }) picking = false
             }
+        replacing?.let { original ->
+            val selected = replacement
+            if (selected == null) {
+                ExercisePicker(
+                    catalog,
+                    state.active?.exercises?.map { it.exerciseId } ?: emptyList(),
+                    title = "Substituir exercício",
+                    onDismiss = { replacing = null },
+                ) { replacement = it }
+            } else {
+                val oldSets = state.active?.sets?.filter { it.exerciseId == original.exerciseId } ?: emptyList()
+                val kept = oldSets.count { it.done }
+                val newCount = if (oldSets.isEmpty()) original.sets.coerceAtLeast(1) else oldSets.count { !it.done }
+                AlertDialog(
+                    onDismissRequest = {
+                        replacing = null
+                        replacement = null
+                        replacementError = null
+                    },
+                    title = { Text("Usar ${selected.name}?") },
+                    text = {
+                        Column(
+                            Modifier.verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Text("As séries pendentes de ${lookup[original.exerciseId]?.name ?: original.exerciseId} serão substituídas por séries de ${selected.name}.")
+                            Text("Os valores ainda não concluídos do exercício original serão removidos. As novas séries usam apenas o histórico do exercício escolhido e começam desmarcadas.")
+                            Text("$newCount novas séries · descanso ${original.restSeconds}s", fontWeight = FontWeight.SemiBold)
+                            if (kept > 0) Text("$kept séries já concluídas serão mantidas no exercício original.")
+                            Text("A rotina salva e o descanso em andamento continuam iguais.", color = Muted, fontSize = 12.sp)
+                            replacementError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            try {
+                                if (updateActive {
+                                    replaceWorkoutExercise(it, original.exerciseId, selected.id, state.workouts)
+                                }) {
+                                    replacing = null
+                                    replacement = null
+                                    replacementError = null
+                                } else replacementError = "Não foi possível salvar a substituição. Seu treino foi mantido."
+                            } catch (e: Exception) {
+                                replacementError = e.message ?: "Não foi possível substituir o exercício."
+                            }
+                        }) { Text("Substituir pendentes") }
+                    },
+                    dismissButton = {
+                        Row {
+                            TextButton(onClick = {
+                                replacing = null
+                                replacement = null
+                                replacementError = null
+                            }) { Text("Cancelar") }
+                            TextButton(onClick = {
+                                replacement = null
+                                replacementError = null
+                            }) { Text("Escolher outro") }
+                        }
+                    },
+                )
+            }
+        }
         detail?.let { exercise ->
-            AlertDialog(
-                onDismissRequest = { detail = null },
-                icon = { Glyph(exercise, 78) },
-                title = { Text(exercise.name) },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(15.dp)) {
-                        Text("${exercise.muscle} · ${exercise.equipment}", color = Muted)
-                        Text(exercise.description)
+            ExerciseDetails(
+                exercise = exercise,
+                workouts = state.workouts,
+                active = state.active,
+                onDismiss = { detail = null },
+                onWorkout = { workout ->
+                    detail = null
+                    workoutDetail = workout
+                },
+                onTrain = {
+                    val active = state.active
+                    val alreadyPresent = active?.exercises?.any { it.exerciseId == exercise.id } == true
+                    val saved = alreadyPresent || save(
+                        state.copy(
+                            active = addExercise(
+                                active ?: startWorkout(null, state.workouts),
+                                ExerciseSpec(exercise.id),
+                                state.workouts,
+                            ),
+                        ),
+                    )
+                    if (saved) {
+                        detail = null
+                        screen = Screen.Training
                     }
                 },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            if (state.active == null)
-                                save(
-                                    state.copy(
-                                        active =
-                                            addExercise(
-                                                startWorkout(null, state.workouts),
-                                                ExerciseSpec(exercise.id),
-                                                state.workouts,
-                                            ),
-                                    ),
-                                )
-                            else
-                                updateActive {
-                                    addExercise(it, ExerciseSpec(exercise.id), state.workouts)
-                                }
-                            detail = null
-                            screen = Screen.Training
-                        },
-                    ) {
-                        Text(
-                            if (state.active == null) "Treinar este exercício"
-                            else "Adicionar ao treino",
-                        )
-                    }
-                },
-                dismissButton = { TextButton(onClick = { detail = null }) { Text("Fechar") } },
             )
         }
         if (finish)
-            AlertDialog(
-                onDismissRequest = { finish = false },
-                title = { Text("Mais um passo dado.") },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(17.dp)) {
-                        Text("Só as séries marcadas como concluídas serão salvas.")
-                        Text(
-                            "${completed(state.active?.sets ?: emptyList()).size} séries · ${fmt(volume(state.active?.sets ?: emptyList()))} kg de volume",
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        if (completed(state.active?.sets ?: emptyList()).isEmpty())
-                            Text(
-                                "Conclua ao menos uma série para salvar.",
-                                color = Color(0xFFA76F5A),
-                            )
-                    }
-                },
-                confirmButton = {
-                    TextButton(
-                        enabled = completed(state.active?.sets ?: emptyList()).isNotEmpty(),
-                        onClick = {
+            state.active?.let { active ->
+                WorkoutFinishReview(
+                    active = active,
+                    lookup = lookup,
+                    now = now,
+                    error = finishError,
+                    onDismiss = {
+                        finish = false
+                        finishError = null
+                    },
+                    onSave = {
+                        try {
                             if (save(finishWorkout(state))) {
                                 finish = false
+                                finishError = null
                                 screen = Screen.History
-                            }
-                        },
-                    ) {
-                        Text("Salvar treino")
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { finish = false }) { Text("Continuar treinando") }
-                },
-            )
+                            } else finishError = "Não foi possível salvar. O treino em andamento foi mantido; tente novamente."
+                        } catch (e: Exception) {
+                            finishError = e.message ?: "Não foi possível finalizar o treino."
+                        }
+                    },
+                )
+            }
         if (discard)
             AlertDialog(
                 onDismissRequest = { discard = false },
@@ -1104,9 +1388,10 @@ fun OnepunchApp() {
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            save(state.copy(active = null))
-                            discard = false
-                            screen = Screen.Home
+                            if (save(state.copy(active = null))) {
+                                discard = false
+                                screen = Screen.Home
+                            }
                         },
                     ) {
                         Text("Descartar", color = Color(0xFFAA5646))
@@ -1126,14 +1411,13 @@ fun OnepunchApp() {
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            updateActive {
+                            if (updateActive {
                                 it.copy(
                                     exercises =
                                         it.exercises.filterNot { e -> e.exerciseId == exercise.id },
                                     sets = it.sets.filterNot { s -> s.exerciseId == exercise.id },
                                 )
-                            }
-                            removing = null
+                            }) removing = null
                         },
                     ) {
                         Text("Remover")
@@ -1142,13 +1426,83 @@ fun OnepunchApp() {
                 dismissButton = { TextButton(onClick = { removing = null }) { Text("Manter") } },
             )
         }
+        removingSet?.let { set ->
+            AlertDialog(
+                onDismissRequest = { removingSet = null },
+                title = { Text("Remover esta série?") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(lookup[set.exerciseId]?.name ?: set.exerciseId)
+                        Text(
+                            if (set.done)
+                                "Esta série está concluída. Ao removê-la, ela deixará de contar no volume e no resumo deste treino."
+                            else "Os valores desta série serão removidos do treino em andamento.",
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        state.active?.let { active ->
+                            val next = active.copy(sets = active.sets.filterNot { it.id == set.id })
+                            if (save(state.copy(active = next))) removingSet = null
+                        }
+                    }) { Text("Remover série") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { removingSet = null }) { Text("Manter série") }
+                },
+            )
+        }
+        restEditing?.let { spec ->
+            AlertDialog(
+                onDismissRequest = { restEditing = null },
+                title = { Text("Descanso entre séries") },
+                text = {
+                    Column(
+                        Modifier.verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Text(lookup[spec.exerciseId]?.name ?: spec.exerciseId)
+                        Text("Vale para as próximas séries deste exercício. O timer atual e a rotina original continuam iguais.", fontSize = 13.sp, color = Muted)
+                        (listOf(0, 30, 60, 90, 120, 180, 300, 600) + spec.restSeconds)
+                            .distinct().sorted().forEach { seconds ->
+                                TextButton(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    onClick = {
+                                        state.active?.let { active ->
+                                            val next = active.copy(
+                                                exercises = active.exercises.map {
+                                                    if (it.exerciseId == spec.exerciseId)
+                                                        it.copy(restSeconds = seconds)
+                                                    else it
+                                                },
+                                            )
+                                            if (save(state.copy(active = next))) restEditing = null
+                                        }
+                                    },
+                                ) {
+                                    Text(
+                                        if (seconds == 0) "Sem timer" else "$seconds segundos",
+                                        Modifier.weight(1f),
+                                    )
+                                    if (seconds == spec.restSeconds)
+                                        Icon(Icons.Outlined.Check, "Descanso atual")
+                                }
+                            }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { restEditing = null }) { Text("Cancelar") }
+                },
+            )
+        }
         workoutDetail?.let { workout ->
             FullScreenSheet(workout.title, { workoutDetail = null }) {
                 Column(
-                    Modifier.verticalScroll(rememberScrollState()),
+                    Modifier.weight(1f).verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(20.dp),
                 ) {
-                    Text(date(workout.endedAt), color = Muted)
+                    Text(date(workout.endedAt, includeYear = true), color = Muted)
                     Row {
                         Metric(
                             clock(workout.endedAt - workout.startedAt),
@@ -1165,6 +1519,10 @@ fun OnepunchApp() {
                                 Text(
                                     lookup[exerciseId]?.name ?: exerciseId,
                                     fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.clickable(enabled = lookup[exerciseId] != null) {
+                                        workoutDetail = null
+                                        detail = lookup[exerciseId]
+                                    },
                                 )
                                 sets.forEachIndexed { index, set ->
                                     Row(
@@ -1176,8 +1534,25 @@ fun OnepunchApp() {
                                     }
                                 }
                             }
-                            if (workout.note.isNotEmpty()) Text(workout.note, color = Muted)
                         }
+                    if (workout.note.isNotEmpty()) Text(workout.note, color = Muted)
+                    Text(
+                        if (state.active != null)
+                            "Você já tem um treino em andamento. Retome-o antes de repetir outro."
+                        else "Repetir cria um novo treino com estas cargas e repetições, sem séries concluídas. Descanso inicial: 90s por exercício; ajuste no menu durante o treino.",
+                        color = Muted,
+                        fontSize = 12.sp,
+                    )
+                }
+                PrimaryButton(
+                    if (state.active != null) "Retomar treino em andamento" else "Repetir este treino",
+                    Icons.Outlined.PlayArrow,
+                    enabled = state.active != null || completed(workout.sets).isNotEmpty(),
+                ) {
+                    if (state.active != null || save(repeatWorkout(state, workout))) {
+                        workoutDetail = null
+                        screen = Screen.Training
+                    }
                 }
             }
         }
@@ -1243,6 +1618,210 @@ fun OnepunchApp() {
                     }
                 },
             )
+    }
+}
+
+@Composable
+private fun WorkoutProgress(review: WorkoutReview) {
+    val fraction = if (review.totalCount == 0) 0f else review.completedCount.toFloat() / review.totalCount
+    Panel {
+        Text("${review.completedCount} de ${review.totalCount} séries concluídas", fontWeight = FontWeight.SemiBold)
+        Box(
+            Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp))
+                .background(Line).semantics {
+                    contentDescription = "${review.completedCount} de ${review.totalCount} séries concluídas"
+                },
+        ) {
+            Box(Modifier.fillMaxWidth(fraction).fillMaxHeight().background(Lime))
+        }
+        if (review.totalCount == 0)
+            Text("Adicione um exercício e registre suas séries para começar.", color = Muted, fontSize = 12.sp)
+        else if (review.pendingCount > 0)
+            Text("${review.pendingCount} séries ainda não marcadas como concluídas.", color = Muted, fontSize = 12.sp)
+        if (review.invalidDoneCount > 0)
+            Text(
+                "${review.invalidDoneCount} séries marcadas têm dados inválidos e não entrarão no histórico. Revise carga e repetições.",
+                color = MaterialTheme.colorScheme.error,
+                fontSize = 12.sp,
+            )
+    }
+}
+
+@Composable
+private fun WorkoutFinishReview(
+    active: ActiveWorkout,
+    lookup: Map<String, Exercise>,
+    now: Long,
+    error: String?,
+    onDismiss: () -> Unit,
+    onSave: () -> Unit,
+) {
+    val review = remember(active) { reviewWorkout(active) }
+    FullScreenSheet("Revisar treino", onDismiss) {
+        LazyColumn(
+            Modifier.weight(1f),
+            contentPadding = PaddingValues(bottom = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
+            item {
+                Header(active.title.ifBlank { "Treino sem nome" }, "Confira as séries que vão entrar no histórico.")
+            }
+            if (error != null) item { Text(error, color = MaterialTheme.colorScheme.error) }
+            item {
+                Panel {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Metric(clock(now - active.startedAt), "tempo", Modifier.weight(1f))
+                        Metric(review.completedCount.toString(), "séries a salvar", Modifier.weight(1f))
+                    }
+                    Metric(fmt(review.totalVolume), "kg de volume")
+                    if (review.excludedCount > 0)
+                        Text(
+                            "${review.excludedCount} séries não serão salvas: ${review.pendingCount} não concluídas e ${review.invalidDoneCount} marcadas com dados inválidos. Volte ao treino para revisá-las.",
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 13.sp,
+                        )
+                    if (review.completedCount == 0)
+                        Text("Conclua ao menos uma série válida antes de salvar.", color = MaterialTheme.colorScheme.error)
+                    if (!workoutTitleValid(active.title))
+                        Text("Volte ao treino e dê um nome antes de salvar.", color = MaterialTheme.colorScheme.error)
+                }
+            }
+            items(review.exercises, key = { it.exerciseId }) { exercise ->
+                val numbers = active.sets.filter { it.exerciseId == exercise.exerciseId }
+                    .mapIndexed { index, set -> set.id to index + 1 }.toMap()
+                Panel {
+                    Text(lookup[exercise.exerciseId]?.name ?: exercise.exerciseId, fontWeight = FontWeight.SemiBold)
+                    if (exercise.includedSets.isEmpty())
+                        Text("Nenhuma série deste exercício será salva.", color = Muted, fontSize = 13.sp)
+                    exercise.includedSets.forEachIndexed { index, set ->
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Série ${numbers[set.id] ?: index + 1}", color = Muted, fontSize = 13.sp)
+                            Text("${fmt(numeric(set.weight) ?: 0.0)} kg × ${set.reps}", fontSize = 13.sp)
+                        }
+                    }
+                    if (exercise.excludedCount > 0)
+                        Text("${exercise.excludedCount} séries não entrarão no histórico.", color = Muted, fontSize = 12.sp)
+                }
+            }
+            if (active.note.isNotEmpty()) item {
+                Panel {
+                    Eyebrow("NOTAS DO TREINO")
+                    Text(active.note, fontSize = 14.sp)
+                }
+            }
+        }
+        PrimaryButton(
+            "Salvar treino", Icons.Outlined.Check,
+            enabled = review.completedCount > 0 && workoutTitleValid(active.title),
+            onClick = onSave,
+        )
+        OutlinedButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+            Text("Continuar treinando")
+        }
+    }
+}
+
+@Composable
+private fun ExerciseDetails(
+    exercise: Exercise,
+    workouts: List<Workout>,
+    active: ActiveWorkout?,
+    onDismiss: () -> Unit,
+    onWorkout: (Workout) -> Unit,
+    onTrain: () -> Unit,
+) {
+    val history = remember(workouts, exercise.id) { exerciseHistory(workouts, exercise.id) }
+    FullScreenSheet(exercise.name, onDismiss) {
+        LazyColumn(
+            Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+            contentPadding = PaddingValues(bottom = 12.dp),
+        ) {
+            item {
+                Panel {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Glyph(exercise)
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(exercise.muscle, fontWeight = FontWeight.SemiBold)
+                            Text(exercise.equipment, color = Muted, fontSize = 12.sp)
+                        }
+                    }
+                    Text(exercise.description, fontSize = 14.sp, lineHeight = 21.sp)
+                }
+            }
+            if (history.isEmpty()) {
+                item {
+                    Panel {
+                        Eyebrow("SEU HISTÓRICO")
+                        Text("Seu primeiro registro começa no treino.", fontWeight = FontWeight.SemiBold)
+                        Text(
+                            "As séries válidas que você concluir e salvar neste exercício aparecerão aqui.",
+                            color = Muted,
+                            fontSize = 13.sp,
+                        )
+                    }
+                }
+            } else {
+                item {
+                    Panel {
+                        Eyebrow("SEUS REGISTROS NESTE EXERCÍCIO")
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Metric(history.size.toString(), "sessões", Modifier.weight(1f))
+                            Metric(
+                                fmt(history.maxOf { session -> session.sets.maxOf { numeric(it.weight) ?: 0.0 } }),
+                                "kg · maior carga",
+                                Modifier.weight(1f),
+                            )
+                        }
+                        Metric(
+                            fmt(history.maxOf { volume(it.sets) }),
+                            "kg de volume · maior numa sessão",
+                        )
+                        Text(
+                            "Valores de séries concluídas e salvas. Volume = carga × repetições.",
+                            color = Muted,
+                            fontSize = 12.sp,
+                        )
+                    }
+                }
+                item { Eyebrow("SESSÕES · MAIS RECENTES PRIMEIRO") }
+                items(history, key = { it.id }) { session ->
+                    Panel {
+                        TextButton(onClick = {
+                            workouts.firstOrNull { it.id == session.id }?.let(onWorkout)
+                        }) {
+                            Column(Modifier.weight(1f)) {
+                                Text(session.title, fontWeight = FontWeight.SemiBold)
+                                Text(date(session.endedAt, includeYear = true), color = Muted, fontSize = 12.sp)
+                            }
+                            Icon(Icons.AutoMirrored.Outlined.ArrowForward, "Abrir treino completo")
+                        }
+                        session.sets.forEachIndexed { index, set ->
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Text("Série ${index + 1}", color = Muted, fontSize = 13.sp)
+                                Text("${fmt(numeric(set.weight) ?: 0.0)} kg × ${set.reps}", fontSize = 13.sp)
+                            }
+                        }
+                        Text("${fmt(volume(session.sets))} kg de volume", color = Muted, fontSize = 12.sp)
+                    }
+                }
+            }
+        }
+        PrimaryButton(
+            when {
+                active?.exercises?.any { it.exerciseId == exercise.id } == true -> "Voltar ao treino"
+                active != null -> "Adicionar ao treino"
+                else -> "Treinar este exercício"
+            },
+            Icons.Outlined.PlayArrow,
+            onClick = onTrain,
+        )
     }
 }
 
@@ -1317,7 +1896,11 @@ private fun RoutineCard(
     lookup: Map<String, Exercise>,
     onStart: () -> Unit,
     onEdit: () -> Unit,
+    onDuplicate: (() -> Unit)? = null,
+    onArchive: (() -> Unit)? = null,
+    onRestore: (() -> Unit)? = null,
 ) {
+    var menuOpen by remember(routine.id) { mutableStateOf(false) }
     Panel {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -1332,6 +1915,30 @@ private fun RoutineCard(
             IconButton(onClick = onEdit) {
                 Icon(Icons.Outlined.Edit, "Editar ${routine.name}", Modifier.size(19.dp))
             }
+            if (onDuplicate != null || (!routine.archived && onArchive != null))
+                Box {
+                    IconButton(onClick = { menuOpen = true }) {
+                        Icon(Icons.Outlined.MoreVert, "Opções de ${routine.name}")
+                    }
+                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                        if (onDuplicate != null)
+                            DropdownMenuItem(
+                                text = { Text("Duplicar rotina") },
+                                onClick = {
+                                    menuOpen = false
+                                    onDuplicate()
+                                },
+                            )
+                        if (!routine.archived && onArchive != null)
+                            DropdownMenuItem(
+                                text = { Text("Arquivar rotina") },
+                                onClick = {
+                                    menuOpen = false
+                                    onArchive()
+                                },
+                            )
+                    }
+                }
         }
         Row(
             Modifier.horizontalScroll(rememberScrollState()),
@@ -1370,7 +1977,11 @@ private fun RoutineCard(
             fontSize = 11.sp,
             color = Muted,
         )
-        PrimaryButton("Começar treino", onClick = onStart)
+        if (routine.archived) {
+            Text("Rotina arquivada", color = Muted, fontSize = 12.sp)
+            if (onRestore != null)
+                PrimaryButton("Restaurar rotina", Icons.Outlined.Refresh, onClick = onRestore)
+        } else PrimaryButton("Começar treino", onClick = onStart)
     }
 }
 
@@ -1519,12 +2130,13 @@ private fun FullScreenSheet(
 private fun ExercisePicker(
     catalog: List<Exercise>,
     existing: List<String>,
+    title: String = "Adicionar exercício",
     onDismiss: () -> Unit,
     onSelect: (Exercise) -> Unit,
 ) {
     var query by remember { mutableStateOf("") }
     var muscle by remember { mutableStateOf("Todos") }
-    FullScreenSheet("Adicionar exercício", onDismiss) {
+    FullScreenSheet(title, onDismiss) {
         OutlinedTextField(
             value = query,
             onValueChange = { query = it },
@@ -1550,23 +2162,118 @@ private fun ExercisePicker(
 }
 
 @Composable
-private fun RoutineEditor(
-    routine: Routine?,
-    catalog: List<Exercise>,
+private fun RoutineTemplateLibrary(
+    templates: List<Routine>,
+    lookup: Map<String, Exercise>,
+    error: String?,
     onDismiss: () -> Unit,
-    onSave: (Routine) -> Unit,
+    onUse: (Routine) -> Unit,
 ) {
-    var draft by remember { mutableStateOf(routine ?: Routine(name = "")) }
+    var query by remember { mutableStateOf("") }
+    val shown = templates.filter { template ->
+        normalized(template.name + " " + template.note + " " + template.exercises.joinToString(" ") {
+            lookup[it.exerciseId]?.let { exercise -> "${exercise.name} ${exercise.muscle} ${exercise.equipment}" } ?: it.exerciseId
+        }).contains(normalized(query))
+    }
+    FullScreenSheet("Modelos de rotina", onDismiss) {
+        Text(
+            "Exemplos editáveis, não um plano personalizado. Escolha e ajuste os exercícios; não é necessário realizar todos. Usar modelo abre uma nova cópia para editar antes de salvar.",
+            color = Muted,
+            fontSize = 13.sp,
+        )
+        if (error != null) Text(error, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            label = { Text("Buscar por rotina, exercício ou equipamento") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        LazyColumn(
+            Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(bottom = 12.dp),
+        ) {
+            if (shown.isEmpty()) item { Text("Nenhum modelo encontrado. Tente outro termo.", color = Muted) }
+            items(shown, key = { it.id }) { template ->
+                Panel {
+                    Text(template.name, fontSize = 21.sp, fontWeight = FontWeight.SemiBold)
+                    Text(template.note, color = Muted, fontSize = 12.sp)
+                    Eyebrow("${template.exercises.size} EXERCÍCIOS · VALORES INICIAIS EDITÁVEIS")
+                    template.exercises.forEach { spec ->
+                        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Text(lookup[spec.exerciseId]?.name ?: spec.exerciseId, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                            Text("${spec.sets} × ${spec.reps} · descanso ${spec.restSeconds}s", color = Muted, fontSize = 12.sp)
+                        }
+                    }
+                    PrimaryButton("Usar modelo", Icons.Outlined.Add) { onUse(template) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RoutineDraftNotice(draft: RoutineDraft?, error: String?, onResume: () -> Unit) {
+    Panel {
+        Eyebrow("RASCUNHO DE ROTINA")
+        if (error != null) Text(error, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
+        if (draft != null) {
+            Text(draft.draft.name.ifBlank { "Rotina sem nome" }, fontWeight = FontWeight.SemiBold)
+            Text(
+                "Você tem uma edição guardada neste aparelho. Ela ainda não alterou suas rotinas salvas.",
+                color = Muted,
+                fontSize = 13.sp,
+            )
+            PrimaryButton("Retomar edição", Icons.Outlined.Edit, onClick = onResume)
+        }
+    }
+}
+
+@Composable
+private fun RoutineEditor(
+    session: RoutineDraft,
+    catalog: List<Exercise>,
+    error: String?,
+    conflict: Boolean,
+    onChange: (Routine) -> Boolean,
+    onDismiss: () -> Unit,
+    onKeep: () -> Unit,
+    onSave: () -> Unit,
+    onSaveAsCopy: () -> Unit,
+) {
+    val original = session.original
+    val draft = session.draft
     var picking by remember { mutableStateOf(false) }
+    var confirmDiscard by remember { mutableStateOf(false) }
     val lookup = catalog.associateBy { it.id }
-    FullScreenSheet(if (routine == null) "Criar rotina" else "Editar rotina", onDismiss) {
+    val requestDismiss: () -> Unit = {
+        if (draft != original) confirmDiscard = true else onDismiss()
+    }
+    FullScreenSheet(if (session.isNew) "Criar rotina" else "Editar rotina", requestDismiss) {
         Column(
             Modifier.weight(1f).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
+            Text(
+                "Rascunho salvo neste aparelho a cada alteração. Use Continuar depois para retomar mais tarde; ele só entra nas suas rotinas ao salvar.",
+                color = Muted,
+                fontSize = 12.sp,
+            )
+            if (error != null) Text(error, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
+            if (conflict) {
+                Text(
+                    "A rotina original mudou desde que você abriu este rascunho. Salve como nova rotina para preservar as duas versões.",
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 13.sp,
+                )
+                OutlinedButton(onClick = onSaveAsCopy, enabled = routineValid(draft)) {
+                    Text("Salvar como nova rotina")
+                }
+            }
             OutlinedTextField(
                 value = draft.name,
-                onValueChange = { draft = draft.copy(name = it.take(80)) },
+                onValueChange = { onChange(draft.copy(name = it.take(80))) },
                 label = { Text("Nome da rotina") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -1574,7 +2281,7 @@ private fun RoutineEditor(
             )
             OutlinedTextField(
                 value = draft.note,
-                onValueChange = { draft = draft.copy(note = it.take(200)) },
+                onValueChange = { onChange(draft.copy(note = it.take(200))) },
                 label = { Text("Descrição (opcional)") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(9.dp),
@@ -1593,7 +2300,7 @@ private fun RoutineEditor(
                             onClick = {
                                 val list = draft.exercises.toMutableList()
                                 list[index - 1] = list[index].also { list[index] = list[index - 1] }
-                                draft = draft.copy(exercises = list)
+                                onChange(draft.copy(exercises = list))
                             },
                         ) {
                             Icon(
@@ -1603,14 +2310,31 @@ private fun RoutineEditor(
                             )
                         }
                         IconButton(
+                            enabled = index < draft.exercises.lastIndex,
                             onClick = {
-                                draft =
+                                val list = draft.exercises.toMutableList()
+                                val next = list[index + 1]
+                                list[index + 1] = list[index]
+                                list[index] = next
+                                onChange(draft.copy(exercises = list))
+                            },
+                        ) {
+                            Icon(
+                                Icons.Outlined.ArrowDownward,
+                                "Mover exercício para baixo",
+                                Modifier.size(17.dp),
+                            )
+                        }
+                        IconButton(
+                            onClick = {
+                                onChange(
                                     draft.copy(
                                         exercises =
                                             draft.exercises.filterNot {
                                                 it.exerciseId == spec.exerciseId
                                             },
-                                    )
+                                    ),
+                                )
                             },
                         ) {
                             Icon(Icons.Outlined.Close, "Remover exercício", Modifier.size(17.dp))
@@ -1620,7 +2344,7 @@ private fun RoutineEditor(
                         OutlinedTextField(
                             value = if (spec.sets == 0) "" else spec.sets.toString(),
                             onValueChange = { value ->
-                                draft =
+                                onChange(
                                     draft.copy(
                                         exercises =
                                             draft.exercises.mapIndexed { i, e ->
@@ -1628,9 +2352,14 @@ private fun RoutineEditor(
                                                     e.copy(sets = value.toIntOrNull() ?: 0)
                                                 else e
                                             },
-                                    )
+                                    ),
+                                )
                             },
                             label = { Text("Séries", fontSize = 11.sp) },
+                            isError = spec.sets !in 1..20,
+                            supportingText = {
+                                if (spec.sets !in 1..20) Text("Use 1 a 20 séries")
+                            },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
                             modifier = Modifier.weight(1f),
@@ -1638,7 +2367,7 @@ private fun RoutineEditor(
                         OutlinedTextField(
                             value = if (spec.reps == 0) "" else spec.reps.toString(),
                             onValueChange = { value ->
-                                draft =
+                                onChange(
                                     draft.copy(
                                         exercises =
                                             draft.exercises.mapIndexed { i, e ->
@@ -1646,9 +2375,14 @@ private fun RoutineEditor(
                                                     e.copy(reps = value.toIntOrNull() ?: 0)
                                                 else e
                                             },
-                                    )
+                                    ),
+                                )
                             },
                             label = { Text("Reps", fontSize = 11.sp) },
+                            isError = spec.reps !in 1..1000,
+                            supportingText = {
+                                if (spec.reps !in 1..1000) Text("Use 1 a 1000 reps")
+                            },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
                             modifier = Modifier.weight(1f),
@@ -1668,7 +2402,7 @@ private fun RoutineEditor(
                                         Text(if (seconds == 0) "Sem timer" else "$seconds segundos")
                                     },
                                     onClick = {
-                                        draft =
+                                        onChange(
                                             draft.copy(
                                                 exercises =
                                                     draft.exercises.mapIndexed { i, e ->
@@ -1676,7 +2410,8 @@ private fun RoutineEditor(
                                                             e.copy(restSeconds = seconds)
                                                         else e
                                                     },
-                                            )
+                                            ),
+                                        )
                                         menu = false
                                     },
                                 )
@@ -1695,13 +2430,30 @@ private fun RoutineEditor(
                 Text("Adicionar exercício")
             }
         }
-        PrimaryButton("Salvar rotina", Icons.Outlined.Check, routineValid(draft)) {
-            onSave(draft.copy(name = draft.name.trim(), updatedAt = System.currentTimeMillis()))
+        PrimaryButton("Salvar rotina", Icons.Outlined.Check, routineValid(draft) && !conflict) {
+            onSave()
+        }
+        OutlinedButton(onClick = onKeep, modifier = Modifier.fillMaxWidth()) {
+            Text("Continuar depois")
         }
     }
     if (picking)
-        ExercisePicker(catalog, draft.exercises.map { it.exerciseId }, { picking = false }) {
-            draft = draft.copy(exercises = draft.exercises + ExerciseSpec(it.id))
-            picking = false
+        ExercisePicker(catalog, draft.exercises.map { it.exerciseId }, onDismiss = { picking = false }) {
+            if (onChange(draft.copy(exercises = draft.exercises + ExerciseSpec(it.id)))) picking = false
         }
+    if (confirmDiscard)
+        AlertDialog(
+            onDismissRequest = { confirmDiscard = false },
+            title = { Text("Descartar alterações?") },
+            text = { Text("Estas alterações ainda não foram aplicadas à rotina. Descartar também remove o rascunho salvo neste aparelho.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDiscard = false
+                    onDismiss()
+                }) { Text("Descartar alterações") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDiscard = false }) { Text("Continuar editando") }
+            },
+        )
 }

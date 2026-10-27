@@ -1,23 +1,40 @@
-CURRENTTASK: First native Android + Go/React workout app.
+CURRENTTASK: Continue native Android development without compilation on this PC.
 
-Owner scope: projects/onepunch; provisional name, gym/workout planning and logging,
-Hevy/Fitbod-style functional reference. Prefer native Android Kotlin; Go + JS/React
-web. Owner selected Português (Brasil), kg. Keep all source inside this project.
+Owner scope: projects/onepunch; native Kotlin/Compose workout planner/logger,
+Português (Brasil), kg, with React web companion and personal Go sync API.
+Implement and review source here. Compilation, JVM/device testing and APK
+generation belong on the owner's other machine. Do not substitute web-only work.
 
-Implemented: shared catalog/routines/brand, editable routines, free/routine
-sessions, set entry/completion, previous performance, rest timer, local recovery,
-finished history/volume, weekly web activity, native load records and optional
-personal API sync. Android is Compose, not a WebView/React Native wrapper.
+Latest expansion: shared catalog now has 27 exercises and nine routine examples,
+each with seven distinct exercises. Native and web Modelos prontos expose the
+full library to existing users through fresh editable copies, preserving all
+saved routines/history. Native copies use local draft recovery. JSON validation
+passed for counts, unique IDs/references, field lengths and set/rep/rest bounds.
+No builds, compilation, browser/device suites or APK generation. Restart the
+personal API with the updated catalog before syncing newly introduced exercise IDs.
 
-COMPLETE — first working foundation (2026-10-26).
+Previous milestone (2026-10-27): native session progress, editable workout names and
+a full finish review. Review and save share valid-completed-set selection; progress
+uses actual rows. Names persist while being edited, must be nonblank to finish,
+and are trimmed for history. Review lists exact included sets and omitted counts;
+failed final saves retain the review/active session. Seven WorkoutReviewTest cases
+were written but not compiled or run. Failed discard/removal confirmations also
+remain open when persistence fails.
 
-Verified: Android debug APK builds and signature verifies; 7 Kotlin/JVM tests
-pass (domain + JSON persistence/interoperability). Go race tests pass (4 cases).
-Production React build and 4 domain cases pass. Browser workflows: 116 checks
-at 1440/1024/768/390/320, including offline reload and real Go cross-client sync.
-Unreadable browser records are preserved; API responses are absent from shell
-caches. No emulator/device UI testing was performed.
+Recent native milestones:
+- Active exercise reordering and confirmed pending-set replacement; completed sets
+  and timers are preserved. Eleven WorkoutEditingTest cases await remote execution.
+- Durable local routine drafts, recovery and save-as-copy conflict handling.
+  Nine RoutineDraftTest cases await remote execution; drafts never enter sync.
+- Per-exercise session/load/volume history and replay with new unchecked IDs.
+  Five HistoryTest cases await remote execution.
+- Routine duplicate/archive/restore, editing validation and rest/set controls.
 
-Owner requested GitHub push and generated-file cleanup before personally making
-and uploading a ZIP to Drive. Source-only repository; keep ready artifacts in
-build/ and web/dist locally. No ZIP, public deployment or device installation.
+Verification: continuation source and whitespace reviewed only. No dependencies,
+compilers, Gradle, emulators or APK generation run for this milestone. Existing
+artifacts and original successful foundation checks predate these changes.
+Remote QA: docs/NATIVE_QA.md. Full implementation history: PROGRESS.md.
+
+Keep personal records intact. Preserve existing artifacts in build/ and web/dist.
+Owner requested pushing the accumulated source changes to GitHub. App publishing,
+device installation, ZIP and Drive upload remain outside this request.

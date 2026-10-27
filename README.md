@@ -9,12 +9,29 @@ No React Native or WebView is used in the Android app.
 
 ## What works
 
-- Shared library of 18 exercises and three editable routine templates.
+- Shared library of 27 exercises and nine editable routine examples, each with
+  seven exercises: Superior A/B, Inferior A/B, Empurrar, Puxar, Corpo inteiro A/B,
+  and Com halteres. Exercise choices and initial set/rep/rest values are editable.
+- Modelos prontos in Treinos opens the full template library, including on an
+  existing installation. Usar modelo opens a new editable copy before saving;
+  existing routines, archived items and workout history are never replaced.
 - Create/edit routines, set targets and choose rest intervals.
+- Native routine duplication, archive/restore, and confirmation before discarding
+  routine edits. Archived routines retain their history and remain syncable.
+- Native routine drafts save locally while editing, can be resumed after restart,
+  and offer saving a copy when the original routine changed during sync.
 - Start a routine or a free workout; add exercises/sets and log kg/reps.
 - Mark sets complete, see session volume and compare previous performance.
 - Timestamp-based rest timer, skip/+30 seconds, and local session recovery.
+- Native exercise menu: change rest for upcoming sets or remove an individual
+  set with confirmation, without modifying the original routine.
+- Reorder exercises during training or replace pending sets with another exercise;
+  completed sets remain under their original exercise and the timer stays intact.
+- Rename the active workout, track completed/remaining sets, and review exactly
+  which sets and notes will be saved before finishing.
 - Finish/review a workout, history, weekly activity and best recorded loads.
+- Native exercise details show recorded sessions, highest load and highest
+  session volume; repeat a finished workout as a new session with unchecked sets.
 - Local-first persistence in both clients; the production web shell also caches
   for offline reload after its first successful online load.
 - Optional personal-server sync of routines and **finished** workouts. An active
@@ -50,6 +67,27 @@ adb install -r build/onepunch-debug.apk
 No device installation or public deployment is performed automatically.
 
 ## Build from source
+
+### Lightweight development on this PC
+
+The owner uses this PC while development runs. Routine work must avoid native
+compilation, especially APK generation. Start with this dependency-free check:
+
+```sh
+node --max-old-space-size=128 scripts/check-light.mjs
+```
+
+It validates shared catalog/routine data and runs web domain tests one at a time.
+It does not install packages, bundle assets, invoke Gradle/Go or open browsers.
+The 128 MiB setting limits each Node process's old-generation JavaScript heap;
+it is **not** a total RAM limit. `make check-light` runs the same checks.
+
+The commands below are manual build options, not routine checks. `make test`
+compiles Go tests; `make run` builds both web and API. Android JVM tests also
+require compilation. Do not run these or `make android` automatically on this PC.
+Gradle's heap setting does not bound Kotlin, native tools or total process memory,
+so lowering it alone is insufficient to make APK compilation safe. Existing
+artifacts remain available, but source-only checks do not refresh or verify them.
 
 Requirements: Node 22+ and npm, Go (tested with 1.26), JDK 17, Android SDK platform
 36/build-tools 36.0.0. The Android Gradle wrapper is included; Android Studio can
@@ -95,6 +133,10 @@ keys and `applicationId` stable if you want existing installations to retain the
 workout data. The source folder/build project can keep its current internal name.
 
 ## Verification
+
+Native source changes made on 2026-10-27 have not been compiled or device-tested
+on this PC at the owner's request. See [native QA handoff](docs/NATIVE_QA.md) for
+the checks to perform on the other machine. Existing APKs predate these changes.
 
 - `npm test --prefix web`: domain checks for logging, invalid inputs, volume,
   previous-set prefills, sync merging and date grouping.

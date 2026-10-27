@@ -5,6 +5,15 @@ format. Native UI is Kotlin/Jetpack Compose; the React app runs in the browser.
 Go serves the compiled web assets and provides a personal sync API. Runtime data
 is separate from source and the initial seed contains routines, never history.
 
+Shared content contains 27 exercises and nine editable routine examples, each
+with seven distinct exercises and editable initial set/rep/rest values. Existing
+seed IDs remain stable. Fresh workspaces receive the expanded examples; existing
+workspaces are never reseeded or overwritten. Both clients expose Modelos prontos
+to preview the full library and edit a new UUID copy before saving. Native copies
+use the recoverable local draft flow and resume any pending draft first. The
+library itself never becomes workout history. Restart the personal API with the
+updated exercise catalog before syncing newly added exercise IDs.
+
 ## Layout
 
 ```text
@@ -30,11 +39,46 @@ numeric values, clears active, and never saves an empty session. Session volume
 is sum(weight × reps); no predicted scores, progress or training outcomes are
 invented. Previous-set suggestions come exclusively from actual finished history.
 
+Native session progress counts actual set rows, not routine targets: valid done
+sets are completed; unchecked sets and invalid marked-done sets remain excluded.
+An empty session shows zero progress. The finish review lists the included sets
+by exercise with their original active row numbers, excluded counts, volume and
+note. Both preview and finish use reviewWorkout, preventing selection drift.
+Active names persist while editing (including a temporarily empty value); finish
+requires a nonblank name and trims it for history. Renaming never edits a routine
+or old history. Failed final saves leave the review and active session in place.
+
+Native exercise details derive session history, maximum recorded load and maximum
+per-session volume from valid completed sets, grouped by exercise. These are
+derived views; opening a session returns its full original workout. Latest-set
+prefills use the same validity filter. No empty or predicted records are shown.
+
+Repeating a finished workout creates a new local active ID and new unchecked set
+IDs, preserving the recorded kg/reps and exercise order. It cannot replace an
+existing active workout and does not modify finished history or routine templates.
+Old workout notes/timestamps/timers are not carried over. Finished records do not
+store rest intervals, so replay explicitly starts at 90 seconds per exercise,
+editable during the new session. Storage and API formats remain version 1.
+
 The web stores JSON in localStorage `onepunch.workspace.v1`. Android stores its
 workspace in private SharedPreferences. Invalid saved data is preserved instead
 of auto-reset. Native writes check commit success before replacing UI state.
 Browser storage-write failures show a persistent error. Data cleared by the OS or
 user is not silently recoverable unless it has been synced to the personal API.
+
+Native routine editing has a separate version-1 `routineDraft` SharedPreferences
+entry: original routine snapshot, current draft and creation flag. Each accepted
+edit persists before replacing the editor state; invalid/unfinished counts are
+allowed in drafts but cannot be committed as saved routines. One draft can be
+resumed from Home or Treinos after restart. Creating/editing another routine first
+resumes the pending draft rather than overwriting it. Continuing later keeps it;
+confirmed discard removes it. It never enters Workspace or sync payloads.
+
+Saving a routine and removing its draft use one SharedPreferences commit. If the
+saved routine differs from the draft's original snapshot (including archive/sync
+changes), direct replacement is blocked; saving as a new active copy preserves
+both versions. Unknown/unreadable draft records are left untouched and routine
+editing is blocked, while existing workouts and sync remain usable.
 
 The timer persists an absolute deadline, so backgrounding/reloading does not reset
 it. This build does not schedule system alarms or promise background alerts.
@@ -56,8 +100,26 @@ The store validates catalog references, limits and completed sets. History IDs
 are immutable; a changed record under an existing ID produces 409. Routine
 conflicts use modification timestamps, not real-time collaborative editing.
 Client merge retains any local active workout and newer local routine edits.
-Routine archiving is represented in the format for future archive UI; there is
-no destructive history-delete API.
+Native routine management supports archive/restore using the existing archived
+flag and updatedAt timestamp; archived routines stay in sync and out of the home
+recommendations. Duplicating creates a new routine ID and opens an unsaved draft,
+leaving the original unchanged. There is no destructive history-delete API.
+
+Native active-workout exercise menus support removing an individual set (with
+confirmation, including completed sets) and changing the rest interval for future
+set completions. These changes affect only the active local session, preserve the
+current timer deadline, and do not rewrite routine templates or finished history.
+
+Active exercise order can be changed without modifying set IDs, values or done
+flags. Finished set order follows the visible exercise order, including sets added
+later. Replacement is confirmed and affects only pending sets: done sets remain
+under the original exercise, with the replacement inserted after it. If no sets
+are done, the replacement takes the same position. New sets receive fresh IDs and
+unchecked prefills exclusively from the replacement exercise's history; original
+pending inputs are removed. The pending count, target reps and rest interval are
+used as defaults; an exercise with no rows uses its planned count. Already-present
+targets and fully completed source exercises cannot be replaced. Active workout
+identity, note, startedAt and current rest deadline are preserved. No schema changes.
 
 One process owns the JSON file. A mutex serializes merges; each successful write
 uses a synced temporary file and rename before updating memory. Inputs/returned
@@ -76,8 +138,9 @@ rebuilds; changing the display brand preserves storage/application identity.
 
 ## Current verification boundary
 
-Compiled Android APK and Kotlin/JVM domain/JSON tests; native device UI testing
-still pending because the environment has no emulator. Browser workflows use a
+The 2026-10-26 foundation had a compiled Android APK and passing Kotlin/JVM tests.
+Native source continuations are reviewed only; compilation and device testing are
+deferred to the owner's other machine (docs/NATIVE_QA.md). Browser workflows use a
 real temporary Go API and isolated browser profiles, not fabricated production
 history. All UI artwork is original CSS/SVG/native vectors, with no copied assets
 from the reference apps.

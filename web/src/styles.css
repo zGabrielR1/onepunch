@@ -1212,6 +1212,25 @@ a {
   font-size: 11px;
   line-height: 1.6;
 }
+.routine-template {
+  margin: 14px 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.routine-template summary {
+  cursor: pointer;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.routine-template ul {
+  padding-left: 20px;
+  margin: 16px 0;
+}
+.routine-template li {
+  margin: 8px 0;
+  line-height: 1.6;
+}
 .modal-description {
   font-size: 13px;
   line-height: 1.8;

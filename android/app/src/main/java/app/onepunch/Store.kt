@@ -163,18 +163,41 @@ class StateStore(context: Context) {
                     it.getString("description"),
                 )
             }
-    private val seeds =
+    val routineTemplates =
         JSONArray(context.assets.open("routines.json").bufferedReader().use { it.readText() })
             .objects()
             .map(::routineFrom)
 
     fun load(): Workspace =
         prefs.getString("workspace", null)?.let { workspaceFrom(JSONObject(it)) }
-            ?: Workspace(routines = seeds)
+            ?: Workspace(routines = routineTemplates)
 
-    fun save(s: Workspace) {
-        check(prefs.edit().putString("workspace", workspaceJson(s).toString()).commit()) {
+    fun save(s: Workspace, clearRoutineDraft: Boolean = false) {
+        val edit = prefs.edit().putString("workspace", workspaceJson(s).toString())
+        if (clearRoutineDraft) edit.remove("routineDraft")
+        check(edit.commit()) {
             "Não foi possível salvar neste dispositivo."
+        }
+    }
+
+    fun loadRoutineDraft(): RoutineDraft? =
+        prefs.getString("routineDraft", null)?.let {
+            routineDraftFrom(JSONObject(it)).also { value ->
+                require(value.draft.exercises.all { spec -> catalog.any { it.id == spec.exerciseId } }) {
+                    "O rascunho contém um exercício que não está no catálogo."
+                }
+            }
+        }
+
+    fun saveRoutineDraft(value: RoutineDraft) {
+        check(prefs.edit().putString("routineDraft", routineDraftJson(value).toString()).commit()) {
+            "Não foi possível salvar o rascunho neste dispositivo."
+        }
+    }
+
+    fun clearRoutineDraft() {
+        check(prefs.edit().remove("routineDraft").commit()) {
+            "Não foi possível remover o rascunho neste dispositivo."
         }
     }
 

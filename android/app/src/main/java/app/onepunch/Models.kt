@@ -83,11 +83,7 @@ fun volume(sets: List<WorkoutSet>): Double =
     ) / 100
 
 fun latestSets(workouts: List<Workout>, exerciseId: String) =
-    workouts
-        .sortedByDescending { it.endedAt }
-        .firstOrNull { w -> w.sets.any { it.exerciseId == exerciseId } }
-        ?.sets
-        ?.filter { it.exerciseId == exerciseId } ?: emptyList()
+    exerciseHistory(workouts, exerciseId).firstOrNull()?.sets ?: emptyList()
 
 fun addExercise(active: ActiveWorkout, spec: ExerciseSpec, workouts: List<Workout>): ActiveWorkout {
     if (active.exercises.any { it.exerciseId == spec.exerciseId }) return active
@@ -134,13 +130,14 @@ fun toggleSet(
 
 fun finishWorkout(state: Workspace, now: Long = System.currentTimeMillis()): Workspace {
     val active = state.active ?: return state
-    val sets = completed(active.sets)
+    val sets = reviewWorkout(active).includedSets
     require(sets.isNotEmpty()) { "Conclua ao menos uma série para salvar." }
+    require(workoutTitleValid(active.title)) { "Dê um nome ao treino antes de salvar." }
     val workout =
         Workout(
             active.id,
             active.routineId,
-            active.title,
+            active.title.trim(),
             active.startedAt,
             maxOf(now, active.startedAt),
             now,
