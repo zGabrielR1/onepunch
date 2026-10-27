@@ -26,7 +26,7 @@ class SafeRedirect(urllib.request.HTTPRedirectHandler):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["status", "runs", "jobs", "logs", "dispatch"])
+    parser.add_argument("action", choices=["status", "runs", "jobs", "logs", "dispatch", "verify"])
     parser.add_argument("--run", type=int)
     args = parser.parse_args()
     env = dict(os.environ, GIT_TERMINAL_PROMPT="0")
@@ -43,7 +43,7 @@ def main():
     def request(path, data=None, binary=False):
         req = urllib.request.Request(
             BASE + path, data=None if data is None else json.dumps(data).encode(),
-            headers={"Authorization": "Bearer " + token, "Accept": "application/vnd.github+json",
+            headers={"Authorization": "Bearer " + token, "Accept": "application/octet-stream" if binary else "application/vnd.github+json",
                      "User-Agent": "onepunch-release", "Content-Type": "application/json"},
         )
         try:
@@ -65,6 +65,17 @@ def main():
                           "default_branch": repo["default_branch"], "permissions": repo.get("permissions"),
                           "releases": [{"tag": r["tag_name"], "draft": r["draft"], "url": r["html_url"]} for r in releases],
                           "actions": request("/actions/permissions")}, indent=2))
+    elif args.action == "verify":
+        release = request("/releases/tags/v0.2.0-rc.1")
+        assets = release["assets"]
+        manifest_asset = next(asset for asset in assets if asset["name"] == "verification.json")
+        manifest = json.loads(request(f"/releases/assets/{manifest_asset['id']}", binary=True))
+        if "commit" not in manifest:
+            raise RuntimeError("The published verification manifest could not be read.")
+        print(json.dumps({"url": release["html_url"], "draft": release["draft"],
+                          "prerelease": release["prerelease"],
+                          "assets": [{"name": a["name"], "size": a["size"], "digest": a.get("digest")} for a in assets],
+                          "verification": manifest}, indent=2))
     elif args.action == "runs":
         runs = request("/actions/runs?per_page=5")["workflow_runs"]
         print(json.dumps([{k: r[k] for k in ["id", "name", "head_sha", "status", "conclusion", "html_url"]} for r in runs], indent=2))

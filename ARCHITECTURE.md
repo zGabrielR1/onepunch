@@ -138,9 +138,10 @@ rebuilds; changing the display brand preserves storage/application identity.
 
 ## Current verification boundary
 
-The 2026-10-26 foundation had a compiled Android APK and passing Kotlin/JVM tests.
-Native source continuations are reviewed only; compilation and device testing are
-deferred to the owner's other machine (docs/NATIVE_QA.md). Browser workflows use a
+RC1 source a5f2e87 was compiled and verified on GitHub-hosted Ubuntu: 39 Android
+JVM tests, four Go race tests, 116 browser checks, web tests/build and APK signature
+verification passed. No compilation ran on the development PC. Native device UI
+testing remains separate and pending (docs/NATIVE_QA.md). Browser workflows use a
 real temporary Go API and isolated browser profiles, not fabricated production
 history. All UI artwork is original CSS/SVG/native vectors, with no copied assets
 from the reference apps.

@@ -1,5 +1,23 @@
 # Progress
 
+## 2026-10-27 — RC1 published after hosted verification
+
+- Published private-repository prerelease v0.2.0-rc.1 from source commit
+  a5f2e87f3306f53ed480f14784f69f0a8072725d. Hosted workflow 40547042171 passed.
+- Evidence read back from the published verification.json: 39 Android JVM tests
+  (zero failures/errors/skips), four Go race tests, 116 browser workflow checks;
+  web domain tests/build and APK compilation/signature verification also passed.
+- Attached fresh 18,364,000-byte debug APK, Linux API/web/catalog bundle,
+  verification.json, certificate details and SHA256SUMS.txt. APK SHA-256:
+  c23a053c9e5c30a1fadc3e7ffe31a2490f3c2f31f42c2ab233406e07e31bc81e.
+- Verified the release is published (not draft), marked prerelease, with assets
+  and metadata bound to the checked source. Repository visibility stays private.
+- No native compilation, dependency install or emulator ran on this PC. Existing
+  local artifacts were not replaced. Android device UI remains untested; release
+  notes explain temporary debug signing and potential update incompatibility.
+- Release: https://github.com/zGabrielR1/onepunch/releases/tag/v0.2.0-rc.1
+  Run: https://github.com/zGabrielR1/onepunch/actions/runs/40547042171
+
 ## 2026-10-27 — hosted prerelease preparation
 
 - Owner requested a release. Added a manual GitHub-hosted Ubuntu pipeline for

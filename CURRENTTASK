@@ -7,9 +7,12 @@ generation belong on the owner's other machine. Do not substitute web-only work.
 
 Owner now requested a release. Prepared v0.2.0-rc.1 and a manual GitHub-hosted
 release workflow: compile/check/package remotely, publish only after checks pass.
-Local compilation stays prohibited. Hosted verification/release is pending;
-never substitute the older local APK for the new source. Notes include the
-ephemeral debug-signing update limitation and unverified Android device UI.
+Local compilation stays prohibited. Hosted verification succeeded and RC1 was
+published from a5f2e87f3306f53ed480f14784f69f0a8072725d: 39 Android JVM tests,
+four Go race tests and 116 browser checks, plus web domain/build and APK signature
+checks. Release: https://github.com/zGabrielR1/onepunch/releases/tag/v0.2.0-rc.1
+Fresh debug APK and Linux API/web bundle have checksums and verification.json.
+Notes include ephemeral debug-signing limits; Android device UI is still untested.
 
 Latest expansion: shared catalog now has 27 exercises and nine routine examples,
 each with seven distinct exercises. Native and web Modelos prontos expose the
@@ -36,9 +39,9 @@ Recent native milestones:
   Five HistoryTest cases await remote execution.
 - Routine duplicate/archive/restore, editing validation and rest/set controls.
 
-Verification: continuation source and whitespace reviewed only. No dependencies,
-compilers, Gradle, emulators or APK generation run for this milestone. Existing
-artifacts and original successful foundation checks predate these changes.
+Verification: all native compilation and automated checks ran on GitHub, not this
+development PC. Local build/ artifacts still predate the release; current checked
+downloads are attached to RC1. Real Android device/emulator UI QA remains pending.
 Remote QA: docs/NATIVE_QA.md. Full implementation history: PROGRESS.md.
 
 Keep personal records intact. Preserve existing artifacts in build/ and web/dist.
