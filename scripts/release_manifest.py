@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import re
 import xml.etree.ElementTree as ET
+from release_config import read_release_config
 
 reports = list(Path("android/app/build/test-results/testDebugUnitTest").glob("TEST-*.xml"))
 if not reports:
@@ -26,7 +27,7 @@ go_tests = sum(event.get("Action") == "pass" and "Test" in event for event in go
 if not go_tests:
     raise SystemExit("No successful Go test results found.")
 manifest = {
-    "version": "0.2.0-rc.1",
+    "version": read_release_config()["version"],
     "commit": os.environ["GITHUB_SHA"],
     "workflow": f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
     "android_jvm": totals,

@@ -1,5 +1,13 @@
 CURRENTTASK: Continue native Android development without compilation on this PC.
 
+0.3.0 in progress: native history search/date filters and portable JSON backup /
+restore with merge preview, immutable-history checks, local active/draft priority
+and an exportable pre-restore safety copy. Added 12 backup and three search JVM
+cases for GitHub. shared/release.properties now drives version/tag/manifest and
+Gradle; workflow validates package versions and notes. No local compilation.
+Hosted checks/publication for v0.3.0 are pending. User clarified there was no extra
+requirement after the trailing "and" and asked to continue building.
+
 Owner scope: projects/onepunch; native Kotlin/Compose workout planner/logger,
 Português (Brasil), kg, with React web companion and personal Go sync API.
 Implement and review source here. Compilation, JVM/device testing and APK

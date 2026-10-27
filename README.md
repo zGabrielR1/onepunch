@@ -9,6 +9,12 @@ No React Native or WebView is used in the Android app.
 
 ## What works
 
+- Android history search by workout/exercise/equipment/note, with accent-insensitive
+  matching and 30/90-day filters. Counts, volume and recorded loads follow filters.
+- Android Backup e dados exports/imports JSON through the system file picker,
+  including active inputs and routine drafts. Imports show a merge preview,
+  preserve immutable history and keep an exportable pre-restore safety copy.
+
 - Shared library of 27 exercises and nine editable routine examples, each with
   seven exercises: Superior A/B, Inferior A/B, Empurrar, Puxar, Corpo inteiro A/B,
   and Com halteres. Exercise choices and initial set/rep/rest values are editable.
@@ -49,12 +55,14 @@ race tests and 116 browser workflow checks, plus web tests/build and APK signatu
 verification. Android device UI QA remains pending. Debug signing may prevent an
 in-place update from an older APK; see the release notes before installation.
 
-Current prerelease pipeline: run **Hosted prerelease** from GitHub Actions. Android
+Current prerelease pipeline: update `shared/release.properties`, matching web
+package versions and release notes, then run **Hosted prerelease** from GitHub Actions. Android
 compilation, JVM/Go/web/browser checks and packaging run on GitHub-hosted Ubuntu,
 not the development PC. Publication is blocked when a check fails. The release
 contains a debug-signed test APK, Linux API/web bundle, checksums and verification
 metadata tied to the exact commit. See [RC1 notes](docs/releases/v0.2.0-rc.1.md)
-for signing/update limitations. Device UI QA remains separate.
+for signing/update limitations. Device UI QA remains separate. The workflow checks
+version consistency and refuses to reuse a published version or existing tag.
 
 The older local build artifacts on this checkout are (they predate RC1):
 

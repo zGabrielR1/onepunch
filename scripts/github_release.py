@@ -13,6 +13,9 @@ import urllib.error
 import urllib.request
 import zipfile
 
+sys.dont_write_bytecode = True
+from release_config import read_release_config
+
 BASE = "https://api.github.com/repos/zGabrielR1/onepunch"
 
 
@@ -28,6 +31,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["status", "runs", "jobs", "logs", "dispatch", "verify"])
     parser.add_argument("--run", type=int)
+    parser.add_argument("--tag", default="v" + read_release_config()["version"])
     args = parser.parse_args()
     env = dict(os.environ, GIT_TERMINAL_PROMPT="0")
     credential = subprocess.run(
@@ -66,7 +70,7 @@ def main():
                           "releases": [{"tag": r["tag_name"], "draft": r["draft"], "url": r["html_url"]} for r in releases],
                           "actions": request("/actions/permissions")}, indent=2))
     elif args.action == "verify":
-        release = request("/releases/tags/v0.2.0-rc.1")
+        release = request("/releases/tags/" + args.tag)
         assets = release["assets"]
         manifest_asset = next(asset for asset in assets if asset["name"] == "verification.json")
         manifest = json.loads(request(f"/releases/assets/{manifest_asset['id']}", binary=True))

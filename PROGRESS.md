@@ -1,5 +1,22 @@
 # Progress
 
+## 2026-10-27 — 0.3.0 feature and hosted-release preparation
+
+- Added native accent-insensitive history search by workout/exercise/equipment/
+  note and inclusive 30/90-day filters; totals and recorded loads follow results.
+- Added native JSON backup export/import using Android document contracts. Export
+  includes active inputs/timer and draft; import validates format/references/IDs,
+  numeric fields, history validity and an 8 MiB limit before offering merge.
+- Merge preview preserves finished-history immutability, local active/draft state,
+  newer routine edits and equal-date conflicts as copies. Repeated merges avoid
+  duplicate history/conflict copies. Restore atomically retains an exportable
+  pre-restore safety snapshot; unreadable snapshots are never silently overwritten.
+- Wrote 12 BackupTest cases and three HistorySearchTest cases for hosted execution.
+  Added manual picker/interruption/device QA. No local compilation or JVM run.
+- Added shared release identity and dynamic workflow/manifest/CLI version handling
+  for 0.3.0 (Android code 3), with consistency checks before hosted publication.
+  GitHub build/tests/release are pending at this preparation commit.
+
 ## 2026-10-27 — RC1 published after hosted verification
 
 - Published private-repository prerelease v0.2.0-rc.1 from source commit

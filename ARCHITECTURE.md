@@ -83,6 +83,35 @@ editing is blocked, while existing workouts and sync remain usable.
 The timer persists an absolute deadline, so backgrounding/reloading does not reset
 it. This build does not schedule system alarms or promise background alerts.
 
+## Native backup and restore
+
+Native JSON backup format is separate from sync: `format: onepunch.backup`, version
+1, export time, a full local workspace and optional routine draft. Android's system
+document picker grants access only to the files the user chooses; backup actions
+do not send data to the personal API. The reader bounds input to 8 MiB, rejects
+invalid UTF-8, unknown versions/exercises, duplicate IDs and invalid saved history,
+and preserves unfinished active/draft inputs. Export is plaintext, not encrypted.
+
+Import shows a merge preview before any write. Existing finished workout IDs must
+have semantically identical records (numeric load strings are normalized) or the
+whole operation is rejected. Newer routine timestamps win; equal-date conflicts
+become deduplicated fresh-ID copies, including changed seed templates. A local
+active workout and routine draft take priority; an imported active ID already in
+finished history is never reopened. Last-sync metadata resets after a merge.
+
+Restore saves the old full workspace/draft to `restoreSafetyBackup` and commits
+the merged state/draft in one preferences edit. That safety copy can be exported,
+including for manual recovery, but is not an automatic undo. An unreadable safety
+copy blocks replacement and remains exportable. Merged data must remain exportable
+within the same document limit. File operations and device interruption QA remain
+separate from the pure merge/validation tests.
+
+## Hosted releases
+
+Release identity is owned by `shared/release.properties` (version, Android version
+code and prerelease flag). Gradle reads it directly; hosted CI validates web package
+versions and matching release notes before creating assets, tags or releases.
+
 ## Sync API
 
 - `GET /api/health`: service health/version.

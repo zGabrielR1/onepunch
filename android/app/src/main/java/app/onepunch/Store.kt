@@ -201,6 +201,21 @@ class StateStore(context: Context) {
         }
     }
 
+    fun previousRestoreBackup(): String? = prefs.getString("restoreSafetyBackup", null)
+
+    fun restoreBackup(previous: WorkoutBackup, next: BackupRestorePlan) {
+        // Preserve an unreadable prior safety copy rather than silently overwriting it.
+        previousRestoreBackup()?.let { decodeBackup(it, catalog.map { it.id }.toSet()) }
+        // A successful merge must remain exportable under the same document limit.
+        encodeBackup(WorkoutBackup(next.workspace, next.routineDraft))
+        val edit = prefs.edit()
+            .putString("restoreSafetyBackup", encodeBackup(previous))
+            .putString("workspace", workspaceJson(next.workspace).toString())
+        if (next.routineDraft == null) edit.remove("routineDraft")
+        else edit.putString("routineDraft", routineDraftJson(next.routineDraft).toString())
+        check(edit.commit()) { "Não foi possível restaurar os dados. O estado anterior foi mantido." }
+    }
+
     var server: String
         get() = prefs.getString("server", "http://10.0.2.2:8097")!!
         set(value) {

@@ -3,6 +3,8 @@
 package app.onepunch
 
 import androidx.compose.foundation.Canvas
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -206,12 +208,26 @@ fun OnepunchApp() {
     var detail by remember { mutableStateOf<Exercise?>(null) }
     var workoutDetail by remember { mutableStateOf<Workout?>(null) }
     var syncOpen by remember { mutableStateOf(false) }
+    var dataOpen by remember { mutableStateOf(false) }
+    var dataBusy by remember { mutableStateOf(false) }
+    var dataError by remember { mutableStateOf<String?>(null) }
+    var dataMessage by remember { mutableStateOf<String?>(null) }
+    var pendingImport by remember { mutableStateOf<WorkoutBackup?>(null) }
+    var exportPayload by remember { mutableStateOf<String?>(null) }
+    var historyQuery by remember { mutableStateOf("") }
+    var historyDays by remember { mutableIntStateOf(0) }
     var server by remember { mutableStateOf(store.server) }
     var syncing by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
     val catalog = store.catalog
     val lookup = remember { catalog.associateBy { it.id } }
+    val knownIds = remember { catalog.map { it.id }.toSet() }
+    val visibleWorkouts = remember(state.workouts, historyQuery, historyDays, now / 60000) {
+        val from = if (historyDays == 0) null else day(now).minusDays(historyDays.toLong() - 1)
+            .atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        filterWorkoutHistory(state.workouts, catalog, historyQuery, from, if (historyDays == 0) null else now)
+    }
     fun save(next: Workspace, clearDraft: Boolean = false): Boolean {
         return try {
             store.save(next, clearRoutineDraft = clearDraft)
@@ -304,6 +320,42 @@ fun OnepunchApp() {
         )
         openRoutineEditor(copy, isNew = true)
     }
+    val exportDocument = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        val payload = exportPayload
+        exportPayload = null
+        if (uri != null) scope.launch {
+            dataBusy = true
+            dataError = null
+            try {
+                check(payload != null) { "A exportação foi interrompida. Tente novamente." }
+                withContext(Dispatchers.IO) {
+                    val output = context.contentResolver.openOutputStream(uri, "wt")
+                    checkNotNull(output) { "Não foi possível abrir o destino." }
+                    output.bufferedWriter(Charsets.UTF_8).use { it.write(payload) }
+                }
+                dataMessage = "Backup exportado. Guarde o arquivo em um local seguro."
+            } catch (e: Exception) {
+                dataError = e.message ?: "Não foi possível exportar o backup."
+            } finally { dataBusy = false }
+        }
+    }
+    val importDocument = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) scope.launch {
+            dataBusy = true
+            dataError = null
+            dataMessage = null
+            pendingImport = null
+            try {
+                pendingImport = withContext(Dispatchers.IO) {
+                    val input = context.contentResolver.openInputStream(uri)
+                    checkNotNull(input) { "Não foi possível abrir o arquivo." }
+                    input.use { decodeBackup(readBackupDocument(it), knownIds) }
+                }
+            } catch (e: Exception) {
+                dataError = e.message ?: "Não foi possível ler este backup."
+            } finally { dataBusy = false }
+        }
+    }
     LaunchedEffect(Unit) {
         while (true) {
             now = System.currentTimeMillis()
@@ -373,10 +425,14 @@ fun OnepunchApp() {
                             }
                     },
                     actions = {
-                        if (screen != Screen.Training)
+                        if (screen != Screen.Training) {
+                            IconButton(onClick = { dataOpen = true }) {
+                                Icon(Icons.Outlined.SaveAlt, "Backup e dados")
+                            }
                             IconButton(onClick = { syncOpen = true }) {
                                 Icon(Icons.Outlined.CloudUpload, "Sincronizar treinos")
                             }
+                        }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Paper),
                 )
@@ -691,6 +747,23 @@ fun OnepunchApp() {
                                     "Seu histórico, sem perder uma repetição.",
                                 )
                             }
+                            item {
+                                OutlinedTextField(
+                                    value = historyQuery,
+                                    onValueChange = { historyQuery = it },
+                                    label = { Text("Buscar por treino, exercício ou nota") },
+                                    leadingIcon = { Icon(Icons.Outlined.Search, null) },
+                                    singleLine = true,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    listOf(0, 30, 90).forEach { days ->
+                                        FilterChip(selected = historyDays == days, onClick = { historyDays = days },
+                                            label = { Text(if (days == 0) "Todos" else "$days dias") })
+                                    }
+                                }
+                                Text("${visibleWorkouts.size} de ${state.workouts.size} treinos", color = Muted, fontSize = 12.sp)
+                            }
                             if (state.workouts.isEmpty())
                                 item {
                                     Panel {
@@ -720,24 +793,27 @@ fun OnepunchApp() {
                                     Panel {
                                         Row {
                                             Metric(
-                                                state.workouts.size.toString(),
+                                                visibleWorkouts.size.toString(),
                                                 "treinos",
                                                 Modifier.weight(1f),
                                             )
                                             Metric(
-                                                state.workouts.sumOf { it.sets.size }.toString(),
+                                                visibleWorkouts.sumOf { completed(it.sets).size }.toString(),
                                                 "séries",
                                                 Modifier.weight(1f),
                                             )
                                             Metric(
-                                                fmt(state.workouts.sumOf { volume(it.sets) }),
+                                                fmt(visibleWorkouts.sumOf { volume(it.sets) }),
                                                 "kg",
                                                 Modifier.weight(1f),
                                             )
                                         }
                                     }
                                 }
-                                items(state.workouts, key = { it.id }) { workout ->
+                                if (visibleWorkouts.isEmpty()) item {
+                                    Panel { Text("Nenhum treino encontrado. Altere a busca ou o período.", color = Muted) }
+                                }
+                                items(visibleWorkouts, key = { it.id }) { workout ->
                                     Panel { HistoryRow(workout) { workoutDetail = workout } }
                                 }
                                 item {
@@ -745,8 +821,8 @@ fun OnepunchApp() {
                                         Eyebrow("MELHORES CARGAS REGISTRADAS")
                                         catalog
                                             .filter { e ->
-                                                state.workouts.any { w ->
-                                                    w.sets.any { it.exerciseId == e.id }
+                                                visibleWorkouts.any { w ->
+                                                    completed(w.sets).any { it.exerciseId == e.id }
                                                 }
                                             }
                                             .forEach { e ->
@@ -761,7 +837,7 @@ fun OnepunchApp() {
                                                         modifier = Modifier.weight(1f),
                                                     )
                                                     Text(
-                                                        "${fmt(state.workouts.flatMap { it.sets }.filter { it.exerciseId == e.id }.maxOf { numeric(it.weight) ?: 0.0 })} kg",
+                                                        "${fmt(visibleWorkouts.flatMap { completed(it.sets) }.filter { it.exerciseId == e.id }.maxOf { numeric(it.weight) ?: 0.0 })} kg",
                                                         fontSize = 13.sp,
                                                         fontWeight = FontWeight.SemiBold,
                                                     )
@@ -1556,6 +1632,49 @@ fun OnepunchApp() {
                 }
             }
         }
+        if (dataOpen) {
+            val plan = pendingImport?.let { backup -> runCatching { planBackupRestore(state, routineDraft, backup) } }
+            BackupDialog(
+                workspace = state,
+                backup = pendingImport,
+                plan = plan,
+                busy = dataBusy || syncing,
+                error = dataError,
+                message = dataMessage,
+                blocked = initialDraft.isFailure,
+                hasPrevious = store.previousRestoreBackup() != null,
+                onDismiss = { if (!dataBusy) dataOpen = false },
+                onExport = { previous ->
+                    try {
+                        dataError = null
+                        dataMessage = null
+                        exportPayload = if (previous) checkNotNull(store.previousRestoreBackup()) { "Não há cópia anterior." }
+                            else encodeBackup(WorkoutBackup(state, routineDraft))
+                        exportDocument.launch("onepunch-${if (previous) "antes-da-restauracao" else "backup"}-${LocalDate.now()}.json")
+                    } catch (e: Exception) { dataError = e.message ?: "Não foi possível preparar o backup." }
+                },
+                onImport = {
+                    pendingImport = null
+                    dataError = null
+                    dataMessage = null
+                    importDocument.launch(arrayOf("application/json", "text/plain"))
+                },
+                onCancelImport = { pendingImport = null; dataError = null },
+                onRestore = {
+                    try {
+                        val backup = checkNotNull(pendingImport)
+                        val next = planBackupRestore(state, routineDraft, backup)
+                        store.restoreBackup(WorkoutBackup(state, routineDraft), next)
+                        state = next.workspace
+                        routineDraft = next.routineDraft
+                        draftError = null
+                        pendingImport = null
+                        dataError = null
+                        dataMessage = "Backup mesclado. A cópia do estado anterior está disponível para exportar."
+                    } catch (e: Exception) { dataError = e.message ?: "Não foi possível restaurar os dados." }
+                },
+            )
+        }
         if (syncOpen)
             AlertDialog(
                 onDismissRequest = { if (!syncing) syncOpen = false },
@@ -1618,6 +1737,67 @@ fun OnepunchApp() {
                     }
                 },
             )
+    }
+}
+
+@Composable
+private fun BackupDialog(
+    workspace: Workspace,
+    backup: WorkoutBackup?,
+    plan: Result<BackupRestorePlan>?,
+    busy: Boolean,
+    error: String?,
+    message: String?,
+    blocked: Boolean,
+    hasPrevious: Boolean,
+    onDismiss: () -> Unit,
+    onExport: (Boolean) -> Unit,
+    onImport: () -> Unit,
+    onCancelImport: () -> Unit,
+    onRestore: () -> Unit,
+) {
+    val preview = plan?.getOrNull()
+    FullScreenSheet("Backup e dados", onDismiss) {
+        Column(
+            Modifier.weight(1f).verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
+            Text("${workspace.routines.size} rotinas · ${workspace.workouts.size} treinos salvos", fontWeight = FontWeight.SemiBold)
+            Text(
+                "Exporte seus registros, o treino em andamento e o rascunho de rotina em um arquivo JSON. O arquivo contém dados pessoais em texto simples; guarde-o em local seguro.",
+                color = Muted, fontSize = 13.sp,
+            )
+            if (blocked) Text("Há um rascunho local ilegível. Os dados foram preservados; exportação e importação estão bloqueadas para não perdê-lo.", color = MaterialTheme.colorScheme.error)
+            if (busy) Text("Processando… aguarde.", color = Muted)
+            error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            message?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
+            PrimaryButton("Exportar backup", Icons.Outlined.SaveAlt, enabled = !busy && !blocked) { onExport(false) }
+            OutlinedButton(onClick = onImport, enabled = !busy && !blocked, modifier = Modifier.fillMaxWidth()) {
+                Text("Escolher arquivo para restaurar")
+            }
+            if (hasPrevious) OutlinedButton(onClick = { onExport(true) }, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
+                Text("Exportar cópia anterior à restauração")
+            }
+            if (backup != null) {
+                Panel {
+                    Eyebrow("PRÉVIA · ${date(backup.exportedAt, includeYear = true)}")
+                    plan?.exceptionOrNull()?.let { Text(it.message ?: "Não foi possível mesclar este arquivo.", color = MaterialTheme.colorScheme.error) }
+                    if (preview != null) {
+                        Text("${preview.addedWorkouts} novos treinos · ${preview.addedRoutines} novas rotinas")
+                        Text("${preview.updatedRoutines} rotinas serão atualizadas por versões mais recentes do arquivo.", fontSize = 13.sp)
+                        if (preview.copiedRoutines > 0) Text("${preview.copiedRoutines} rotinas com conflito de data serão adicionadas como cópias (backup).", fontSize = 13.sp)
+                        if (preview.activeRestored) Text("O treino em andamento do arquivo será recuperado, com seus valores e prazo de descanso.", fontSize = 13.sp)
+                        else if (preview.activeKept) Text("Seu treino em andamento local será mantido. O do arquivo não irá substituí-lo.", fontSize = 13.sp)
+                        else if (backup.workspace.active != null) Text("O treino do arquivo já consta no histórico e não será reaberto.", fontSize = 13.sp)
+                        if (preview.draftRestored) Text("O rascunho de rotina do arquivo será recuperado.", fontSize = 13.sp)
+                        if (preview.draftKept) Text("Seu rascunho local será mantido; o do arquivo não o substituirá.", fontSize = 13.sp)
+                        Text("Treinos já salvos não serão sobrescritos. Uma cópia do estado anterior ficará guardada neste aparelho para exportação.", color = Muted, fontSize = 12.sp)
+                    }
+                }
+                PrimaryButton("Confirmar mesclagem", Icons.Outlined.Check, enabled = preview != null && !busy && !blocked, onClick = onRestore)
+                TextButton(onClick = onCancelImport, enabled = !busy) { Text("Cancelar importação") }
+            }
+        }
     }
 }
 

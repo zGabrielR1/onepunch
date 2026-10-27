@@ -11,6 +11,10 @@ val brand =
         rootProject.file("../shared/brand.properties").reader(Charsets.UTF_8).use { load(it) }
     }
 
+val releaseVersion = Properties().apply {
+    rootProject.file("../shared/release.properties").reader(Charsets.UTF_8).use { load(it) }
+}
+
 android {
     namespace = "app.onepunch"
     compileSdk = 36
@@ -18,8 +22,8 @@ android {
         applicationId = "app.onepunch"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "0.2.0-rc.1"
+        versionCode = releaseVersion.getProperty("androidVersionCode").toInt()
+        versionName = releaseVersion.getProperty("version")
         resValue("string", "app_name", brand.getProperty("displayName"))
     }
     buildFeatures { compose = true }

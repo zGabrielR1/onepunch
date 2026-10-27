@@ -8,6 +8,7 @@ android/local.properties
 build/
 build-go-tests.json
 build-browser-checks.txt
+__pycache__/
 server/data/
 *.log
 .env

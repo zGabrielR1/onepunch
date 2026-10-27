@@ -10,9 +10,6 @@ concurrency:
 permissions:
   contents: write
 
-env:
-  RELEASE_TAG: v0.2.0-rc.1
-
 jobs:
   verify-and-release:
     runs-on: ubuntu-24.04
@@ -21,10 +18,16 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - name: Validate source versions and release notes
+        run: python scripts/release_config.py >> "$GITHUB_ENV"
       - name: Refuse to replace an existing release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" >/dev/null 2>&1; then
+            echo 'This tag already exists; refusing to attach new artifacts to older source.'
+            exit 1
+          fi
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             echo 'This version already exists; choose a new release version.'
             exit 1
@@ -104,9 +107,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          release_flags=()
+          if [[ "$RELEASE_PRERELEASE" == "true" ]]; then release_flags+=(--prerelease); fi
           gh release create "$RELEASE_TAG" \
-            --target "$GITHUB_SHA" --prerelease \
-            --title "OnePunch 0.2.0 RC1" \
-            --notes-file docs/releases/v0.2.0-rc.1.md \
+            --target "$GITHUB_SHA" "${release_flags[@]}" \
+            --title "$RELEASE_TITLE" \
+            --notes-file "$RELEASE_NOTES" \
             build/release/*.apk build/release/*.tar.gz \
             build/release/verification.json build/release/apk-signature.txt build/release/SHA256SUMS.txt

@@ -7,6 +7,36 @@ Use the fresh APK from the GitHub RC1 release, not the older local build/ APK.
 The temporary debug signing certificate may differ from prior APKs; use a test
 device/profile and retain any existing installation with personal workout data.
 
+## 0.3.0 device checks
+
+1. In Histórico search by workout title, exercise, equipment and notes, including
+   uppercase and unaccented Portuguese. Check empty results, clearing the query,
+   and Todos/30/90-day bounds. Totals and recorded-load rows must follow the filter;
+   the underlying history must remain unchanged.
+2. In Backup e dados export to local storage. Cancel the picker once, retry, then
+   inspect the JSON on a test device. Confirm routines, valid history, unfinished
+   active strings/rest deadline and the routine draft are present. No API request
+   should occur. The file is plaintext personal data; keep test records disposable.
+3. Choose that file for restore. Merely selecting it must not alter any data.
+   Inspect the counts/updated-routine warnings, cancel once, then confirm. Existing
+   local active/draft take priority; a fresh workspace should recover both.
+4. Repeat import and verify no duplicate history. Check older/newer routine edits,
+   equal-date routine conflicts (copies), and an active ID already finished locally
+   (must not reopen). Changed content under an existing workout ID must reject the
+   entire operation, with no partial routine/workout import.
+5. Export the pre-restore safety copy and confirm it describes the exact previous
+   workspace and draft. It is a recovery file, not an automatic rollback action.
+   Storage errors must not dismiss as success or clear local state.
+6. Try malformed JSON, wrong versions, fractional set targets, duplicate IDs,
+   unknown catalog entries, malformed active/draft values, invalid saved sets and
+   files over 8 MiB. Expect visible errors and no local mutation. Unfinished active
+   weight/repetition strings must still round-trip without being marked done.
+7. Rotate/recreate the activity while a picker/file operation is open. A cancelled
+   or interrupted export may need retry; it must never claim an empty/partial file
+   is successful. Imports must not apply themselves after selection/interruption.
+8. Check narrow phones and large font settings for top-bar data actions, history
+   filters and the scrollable restore preview. Compile/tests run only on GitHub.
+
 ## Build on the testing machine
 
 Use JDK 17 and Android SDK 36. From `android/`:

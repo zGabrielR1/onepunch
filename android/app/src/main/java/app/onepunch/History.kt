@@ -1,5 +1,19 @@
 package app.onepunch
 
+fun filterWorkoutHistory(
+    workouts: List<Workout>, catalog: List<Exercise>, query: String = "", from: Long? = null, until: Long? = null,
+): List<Workout> {
+    val lookup = catalog.associateBy { it.id }
+    val search = normalized(query.trim())
+    return workouts.filter { workout ->
+        (from == null || workout.endedAt >= from) && (until == null || workout.endedAt <= until) &&
+            (search.isEmpty() || normalized(workout.title + " " + workout.note + " " +
+                completed(workout.sets).joinToString(" ") { set ->
+                    lookup[set.exerciseId]?.let { "${it.name} ${it.muscle} ${it.equipment}" } ?: set.exerciseId
+                }).contains(search))
+    }.sortedByDescending { it.endedAt }
+}
+
 // Derived views only: never replace or rewrite the original finished records.
 fun exerciseHistory(workouts: List<Workout>, exerciseId: String): List<Workout> =
     workouts.mapNotNull { workout ->
