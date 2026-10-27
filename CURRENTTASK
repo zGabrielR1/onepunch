@@ -1,57 +1,39 @@
-CURRENTTASK: Continue native Android development without compilation on this PC.
-
-0.3.0 in progress: native history search/date filters and portable JSON backup /
-restore with merge preview, immutable-history checks, local active/draft priority
-and an exportable pre-restore safety copy. Added 12 backup and three search JVM
-cases for GitHub. shared/release.properties now drives version/tag/manifest and
-Gradle; workflow validates package versions and notes. No local compilation.
-Hosted checks/publication for v0.3.0 are pending. User clarified there was no extra
-requirement after the trailing "and" and asked to continue building.
+CURRENTTASK: Continue native Android development; builds/checks/releases run on GitHub.
 
 Owner scope: projects/onepunch; native Kotlin/Compose workout planner/logger,
 Português (Brasil), kg, with React web companion and personal Go sync API.
-Implement and review source here. Compilation, JVM/device testing and APK
-generation belong on the owner's other machine. Do not substitute web-only work.
+Never compile native code or generate APKs on the development PC. Use the hosted
+release workflow. User authorized features and a 0.3.0 release; the trailing
+"and" did not imply another requirement.
 
-Owner now requested a release. Prepared v0.2.0-rc.1 and a manual GitHub-hosted
-release workflow: compile/check/package remotely, publish only after checks pass.
-Local compilation stays prohibited. Hosted verification succeeded and RC1 was
-published from a5f2e87f3306f53ed480f14784f69f0a8072725d: 39 Android JVM tests,
-four Go race tests and 116 browser checks, plus web domain/build and APK signature
-checks. Release: https://github.com/zGabrielR1/onepunch/releases/tag/v0.2.0-rc.1
-Fresh debug APK and Linux API/web bundle have checksums and verification.json.
-Notes include ephemeral debug-signing limits; Android device UI is still untested.
+Latest delivered: v0.3.0, published as a private-repository prerelease from
+738a12b287b4abf952bf29249a6f721d133265c7. GitHub run 40558518832 passed:
+54 Android JVM tests (zero failures/errors/skips), four Go race tests, 116 browser
+checks, web domain/build checks and APK signature verification.
+Release: https://github.com/zGabrielR1/onepunch/releases/tag/v0.3.0
 
-Latest expansion: shared catalog now has 27 exercises and nine routine examples,
-each with seven distinct exercises. Native and web Modelos prontos expose the
-full library to existing users through fresh editable copies, preserving all
-saved routines/history. Native copies use local draft recovery. JSON validation
-passed for counts, unique IDs/references, field lengths and set/rep/rest bounds.
-No builds, compilation, browser/device suites or APK generation. Restart the
-personal API with the updated catalog before syncing newly introduced exercise IDs.
+0.3.0 features:
+- Native history search by title/exercise/equipment/note, accent-insensitive, with
+  30/90-day filters; displayed totals and recorded loads follow the result set.
+- Native JSON backup/restore via system document picker, including active inputs,
+  rest deadline and draft. Validate before preview/confirmation; immutable-history
+  conflicts reject the whole merge. Local active/draft take priority.
+- Restore keeps an exportable pre-restore snapshot. Files and merged exports have
+  an 8 MiB limit. Equal-date routine conflicts become deduplicated copies.
+- shared/release.properties drives native version, tag, notes and manifest;
+  hosted CI checks matching web package versions and refuses existing tags.
 
-Previous milestone (2026-10-27): native session progress, editable workout names and
-a full finish review. Review and save share valid-completed-set selection; progress
-uses actual rows. Names persist while being edited, must be nonblank to finish,
-and are trimmed for history. Review lists exact included sets and omitted counts;
-failed final saves retain the review/active session. Seven WorkoutReviewTest cases
-were written but not compiled or run. Failed discard/removal confirmations also
-remain open when persistence fails.
+Previous milestones include nine editable seven-exercise templates / 27 exercises,
+routine drafts/archive/restore, per-exercise history/replay, active exercise
+reorder/replacement, session naming/progress and a detailed finish review.
 
-Recent native milestones:
-- Active exercise reordering and confirmed pending-set replacement; completed sets
-  and timers are preserved. Eleven WorkoutEditingTest cases await remote execution.
-- Durable local routine drafts, recovery and save-as-copy conflict handling.
-  Nine RoutineDraftTest cases await remote execution; drafts never enter sync.
-- Per-exercise session/load/volume history and replay with new unchecked IDs.
-  Five HistoryTest cases await remote execution.
-- Routine duplicate/archive/restore, editing validation and rest/set controls.
+Verification boundary: all compilation and automated checks ran remotely.
+Android device UI/file-picker/interruption QA remains pending: docs/NATIVE_QA.md.
+Published assets are fresh; older local build/ and web/dist artifacts were not
+replaced. APK is debug-signed with a temporary certificate, so in-place updates
+from older builds may be rejected. Use a separate test device/profile and keep
+any existing installation with personal data.
 
-Verification: all native compilation and automated checks ran on GitHub, not this
-development PC. Local build/ artifacts still predate the release; current checked
-downloads are attached to RC1. Real Android device/emulator UI QA remains pending.
-Remote QA: docs/NATIVE_QA.md. Full implementation history: PROGRESS.md.
-
-Keep personal records intact. Preserve existing artifacts in build/ and web/dist.
-Owner requested pushing the accumulated source changes to GitHub. App publishing,
-device installation, ZIP and Drive upload remain outside this request.
+Preserve personal records and unrelated edits, including the pre-existing
+android/gradlew executable-mode difference. Do not install on devices, change
+repository visibility or upload to Drive. Full implementation history: PROGRESS.md.

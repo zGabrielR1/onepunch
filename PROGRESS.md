@@ -1,5 +1,22 @@
 # Progress
 
+## 2026-10-27 — 0.3.0 published and verified
+
+- GitHub run 40558518832 passed and published v0.3.0 from commit
+  738a12b287b4abf952bf29249a6f721d133265c7. Read back the published verification
+  manifest: 54 Android JVM tests, zero failures/errors/skips; four Go race tests;
+  116 browser workflow checks; web domain/build and APK signature checks passed.
+- Attached a fresh 18,413,315-byte debug APK, Linux API/web bundle, certificate
+  details, SHA256SUMS.txt and exact-source verification.json. APK SHA-256:
+  fab3d7cda5acd19fadc02e8189bf061b8fda906fe19083273bda94e5143335b8.
+- Confirmed the release is published (not draft) and marked prerelease. Repository
+  remains private. Builds/checks/packaging/publication ran on GitHub; no local
+  native compilation, dependency installation or emulator/device execution.
+- New document-picker UI and interruption behavior still require device QA.
+  Debug certificate changes may prevent in-place updates from previous APKs.
+- Release: https://github.com/zGabrielR1/onepunch/releases/tag/v0.3.0
+  Run: https://github.com/zGabrielR1/onepunch/actions/runs/40558518832
+
 ## 2026-10-27 — 0.3.0 feature and hosted-release preparation
 
 - Added native accent-insensitive history search by workout/exercise/equipment/

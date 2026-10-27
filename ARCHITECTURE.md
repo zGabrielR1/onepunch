@@ -167,7 +167,7 @@ rebuilds; changing the display brand preserves storage/application identity.
 
 ## Current verification boundary
 
-RC1 source a5f2e87 was compiled and verified on GitHub-hosted Ubuntu: 39 Android
+0.3.0 source 738a12b was compiled and verified on GitHub-hosted Ubuntu: 54 Android
 JVM tests, four Go race tests, 116 browser checks, web tests/build and APK signature
 verification passed. No compilation ran on the development PC. Native device UI
 testing remains separate and pending (docs/NATIVE_QA.md). Browser workflows use a

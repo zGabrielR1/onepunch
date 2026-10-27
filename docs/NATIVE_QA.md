@@ -1,9 +1,9 @@
 # Native QA handoff
 
-RC1 (source a5f2e87) passed hosted Android compilation, 39 JVM tests, four Go race
+0.3.0 (source 738a12b) passed hosted Android compilation, 54 JVM tests, four Go race
 tests and 116 browser checks. Device UI QA below is still pending. Do not compile
 or launch an emulator on the development PC; use the separate testing machine.
-Use the fresh APK from the GitHub RC1 release, not the older local build/ APK.
+Use the fresh APK from the GitHub 0.3.0 release, not the older local build/ APK.
 The temporary debug signing certificate may differ from prior APKs; use a test
 device/profile and retain any existing installation with personal workout data.
 
@@ -47,7 +47,7 @@ Use JDK 17 and Android SDK 36. From `android/`:
 
 On Windows use `gradlew.bat` instead of `./gradlew`. Install the resulting debug
 APK on a test device using a disposable workspace. Never overwrite personal data
-for these checks. The commands above were run on the hosted GitHub runner for RC1,
+for these checks. The commands above were run on the hosted GitHub runner for 0.3.0,
 not on the development PC. Repeat only when further code changes require it.
 
 ## Expanded routine examples

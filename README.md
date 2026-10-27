@@ -48,9 +48,9 @@ examples that the user can change; this version does not generate adaptive plans
 
 ## Try the already built versions
 
-[Download OnePunch 0.2.0 RC1](https://github.com/zGabrielR1/onepunch/releases/tag/v0.2.0-rc.1)
+[Download OnePunch 0.3.0](https://github.com/zGabrielR1/onepunch/releases/tag/v0.3.0)
 for the current debug APK and Linux API/web bundle, with checksums and exact-source
-verification metadata. GitHub-hosted checks passed: 39 Android JVM tests, four Go
+verification metadata. GitHub-hosted checks passed: 54 Android JVM tests, four Go
 race tests and 116 browser workflow checks, plus web tests/build and APK signature
 verification. Android device UI QA remains pending. Debug signing may prevent an
 in-place update from an older APK; see the release notes before installation.
@@ -60,11 +60,11 @@ package versions and release notes, then run **Hosted prerelease** from GitHub A
 compilation, JVM/Go/web/browser checks and packaging run on GitHub-hosted Ubuntu,
 not the development PC. Publication is blocked when a check fails. The release
 contains a debug-signed test APK, Linux API/web bundle, checksums and verification
-metadata tied to the exact commit. See [RC1 notes](docs/releases/v0.2.0-rc.1.md)
+metadata tied to the exact commit. See [0.3.0 notes](docs/releases/v0.3.0.md)
 for signing/update limitations. Device UI QA remains separate. The workflow checks
 version consistency and refuses to reuse a published version or existing tag.
 
-The older local build artifacts on this checkout are (they predate RC1):
+The older local build artifacts on this checkout predate the GitHub releases:
 
 - `build/onepunch-debug.apk` — installable Android debug build, Android 8+.
 - `build/onepunch-api` — native Linux API executable.
@@ -156,7 +156,7 @@ workout data. The source folder/build project can keep its current internal name
 
 ## Verification
 
-RC1 native source was compiled and JVM-tested remotely by GitHub Actions; it was
+0.3.0 native source was compiled and JVM-tested remotely by GitHub Actions; it was
 not compiled or device-tested on this PC. See [native QA handoff](docs/NATIVE_QA.md)
 for the remaining device checks. The older local APK predates these changes.
 
