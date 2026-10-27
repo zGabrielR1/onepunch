@@ -1,0 +1,13 @@
+# Dependencies and generated output
+web/node_modules/
+web/dist/
+android/.gradle/
+android/.kotlin/
+android/**/build/
+android/local.properties
+build/
+server/data/
+*.log
+.env
+.env.*
+!.env.example

@@ -1,0 +1,83 @@
+# Architecture
+
+One repository, two independently rendered clients, one shared catalog and sync
+format. Native UI is Kotlin/Jetpack Compose; the React app runs in the browser.
+Go serves the compiled web assets and provides a personal sync API. Runtime data
+is separate from source and the initial seed contains routines, never history.
+
+## Layout
+
+```text
+shared/             exercise catalog, routine templates, provisional brand
+web/                React/JavaScript, pure domain module, production shell cache
+android/            Kotlin/Compose app and Gradle wrapper
+server/             standard-library Go HTTP service and atomic JSON store
+scripts/            reproducible browser checks
+build/              ignored native Linux executable and Android debug APK
+```
+
+## Client state
+
+`Workspace`: version 1, routines, workouts, active workout or null, lastSyncedAt.
+An active workout contains a UUID, routine/title, start time, exercise specs,
+editable set inputs, optional note, and restUntil epoch milliseconds. Inputs stay
+strings while being edited (including empty values and decimal commas). Marking a
+set done requires kg in [0,2000] and integer reps in [1,1000]. Editing a completed
+set unchecks it. Routine sets range 1–20; rest intervals range 0–600 seconds.
+
+Finishing copies only valid completed sets into immutable history, normalizes
+numeric values, clears active, and never saves an empty session. Session volume
+is sum(weight × reps); no predicted scores, progress or training outcomes are
+invented. Previous-set suggestions come exclusively from actual finished history.
+
+The web stores JSON in localStorage `onepunch.workspace.v1`. Android stores its
+workspace in private SharedPreferences. Invalid saved data is preserved instead
+of auto-reset. Native writes check commit success before replacing UI state.
+Browser storage-write failures show a persistent error. Data cleared by the OS or
+user is not silently recoverable unless it has been synced to the personal API.
+
+The timer persists an absolute deadline, so backgrounding/reloading does not reset
+it. This build does not schedule system alarms or promise background alerts.
+
+## Sync API
+
+- `GET /api/health`: service health/version.
+- `GET /api/exercises`: the bundled shared catalog.
+- `POST /api/sync`: JSON `{routines, workouts}` -> complete merged server snapshot
+  `{routines, workouts, revision}`. Never send `active` or client-only metadata.
+
+A routine is `{id,name,note,updatedAt,archived,exercises}`. An exercise spec is
+`{exerciseId,sets,reps,restSeconds}`. Finished workouts are
+`{id,routineId,title,startedAt,endedAt,updatedAt,note,sets}`. Each completed set is
+`{id,exerciseId,weight,reps,done:true}` with numeric weight/reps on the wire.
+All timestamps are epoch milliseconds, IDs are stable UUIDs, and weights are kg.
+
+The store validates catalog references, limits and completed sets. History IDs
+are immutable; a changed record under an existing ID produces 409. Routine
+conflicts use modification timestamps, not real-time collaborative editing.
+Client merge retains any local active workout and newer local routine edits.
+Routine archiving is represented in the format for future archive UI; there is
+no destructive history-delete API.
+
+One process owns the JSON file. A mutex serializes merges; each successful write
+uses a synced temporary file and rename before updating memory. Inputs/returned
+snapshots are detached from store-owned slices. The service has no external
+libraries, no public authentication and no multi-tenant data model. Default bind
+is 127.0.0.1. Public hosting would require an intentional identity/security design.
+
+## Offline web shell
+
+The Vite build emits a versioned service worker and precache list of built assets.
+Navigation falls back to the cached root app shell when offline. API responses and
+personal records are never cached by the worker. A first successful online load
+is necessary before browser offline reload works. Native assets are bundled in
+the APK and require no initial connection. Routine/catalog changes require client
+rebuilds; changing the display brand preserves storage/application identity.
+
+## Current verification boundary
+
+Compiled Android APK and Kotlin/JVM domain/JSON tests; native device UI testing
+still pending because the environment has no emulator. Browser workflows use a
+real temporary Go API and isolated browser profiles, not fabricated production
+history. All UI artwork is original CSS/SVG/native vectors, with no copied assets
+from the reference apps.

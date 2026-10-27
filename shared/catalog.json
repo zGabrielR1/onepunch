@@ -1,0 +1,128 @@
+[
+  {
+    "id": "bench-press",
+    "name": "Supino reto",
+    "muscle": "Peito",
+    "equipment": "Barra",
+    "description": "Empurre com controle. Mantenha os pés apoiados e as escápulas estáveis."
+  },
+  {
+    "id": "incline-dumbbell",
+    "name": "Supino inclinado",
+    "muscle": "Peito",
+    "equipment": "Halteres",
+    "description": "Mantenha os punhos alinhados e controle a descida dos halteres."
+  },
+  {
+    "id": "cable-fly",
+    "name": "Crucifixo na polia",
+    "muscle": "Peito",
+    "equipment": "Polia",
+    "description": "Aproxime as mãos à frente do corpo sem perder o controle dos ombros."
+  },
+  {
+    "id": "lat-pulldown",
+    "name": "Puxada frontal",
+    "muscle": "Costas",
+    "equipment": "Máquina",
+    "description": "Traga a barra à frente do peito, mantendo o tronco estável."
+  },
+  {
+    "id": "seated-row",
+    "name": "Remada baixa",
+    "muscle": "Costas",
+    "equipment": "Polia",
+    "description": "Puxe em direção ao tronco, sem usar impulso."
+  },
+  {
+    "id": "dumbbell-row",
+    "name": "Remada unilateral",
+    "muscle": "Costas",
+    "equipment": "Halteres",
+    "description": "Apoie o tronco e conduza o cotovelo para trás com controle."
+  },
+  {
+    "id": "squat",
+    "name": "Agachamento livre",
+    "muscle": "Pernas",
+    "equipment": "Barra",
+    "description": "Mantenha a carga controlada durante todo o movimento."
+  },
+  {
+    "id": "leg-press",
+    "name": "Leg press",
+    "muscle": "Pernas",
+    "equipment": "Máquina",
+    "description": "Mantenha o quadril apoiado e controle a amplitude."
+  },
+  {
+    "id": "romanian-deadlift",
+    "name": "Levantamento romeno",
+    "muscle": "Pernas",
+    "equipment": "Barra",
+    "description": "Leve o quadril para trás mantendo a barra próxima ao corpo."
+  },
+  {
+    "id": "leg-curl",
+    "name": "Mesa flexora",
+    "muscle": "Pernas",
+    "equipment": "Máquina",
+    "description": "Flexione os joelhos sem tirar o quadril do apoio."
+  },
+  {
+    "id": "calf-raise",
+    "name": "Elevação de panturrilha",
+    "muscle": "Pernas",
+    "equipment": "Máquina",
+    "description": "Controle a subida e a descida dos calcanhares."
+  },
+  {
+    "id": "shoulder-press",
+    "name": "Desenvolvimento",
+    "muscle": "Ombros",
+    "equipment": "Halteres",
+    "description": "Empurre os halteres para cima mantendo o tronco estável."
+  },
+  {
+    "id": "lateral-raise",
+    "name": "Elevação lateral",
+    "muscle": "Ombros",
+    "equipment": "Halteres",
+    "description": "Eleve os braços com controle, sem impulso do tronco."
+  },
+  {
+    "id": "barbell-curl",
+    "name": "Rosca direta",
+    "muscle": "Braços",
+    "equipment": "Barra",
+    "description": "Mantenha os cotovelos estáveis enquanto flexiona os braços."
+  },
+  {
+    "id": "triceps-pushdown",
+    "name": "Tríceps na polia",
+    "muscle": "Braços",
+    "equipment": "Polia",
+    "description": "Estenda os cotovelos mantendo os braços próximos ao tronco."
+  },
+  {
+    "id": "hammer-curl",
+    "name": "Rosca martelo",
+    "muscle": "Braços",
+    "equipment": "Halteres",
+    "description": "Flexione os braços com as palmas voltadas uma para a outra."
+  },
+  {
+    "id": "crunch",
+    "name": "Abdominal",
+    "muscle": "Core",
+    "equipment": "Peso corporal",
+    "description": "Flexione o tronco com controle sem puxar o pescoço."
+  },
+  {
+    "id": "push-up",
+    "name": "Flexão de braços",
+    "muscle": "Peito",
+    "equipment": "Peso corporal",
+    "description": "Mantenha o corpo alinhado durante a flexão e a extensão dos braços."
+  }
+]

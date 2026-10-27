@@ -1,0 +1,101 @@
+[
+  {
+    "id": "upper-a",
+    "name": "Superior A",
+    "note": "Peito, costas e ombros",
+    "updatedAt": 1,
+    "archived": false,
+    "exercises": [
+      {
+        "exerciseId": "bench-press",
+        "sets": 3,
+        "reps": 10,
+        "restSeconds": 90
+      },
+      {
+        "exerciseId": "lat-pulldown",
+        "sets": 3,
+        "reps": 10,
+        "restSeconds": 90
+      },
+      {
+        "exerciseId": "shoulder-press",
+        "sets": 3,
+        "reps": 10,
+        "restSeconds": 90
+      },
+      {
+        "exerciseId": "triceps-pushdown",
+        "sets": 3,
+        "reps": 10,
+        "restSeconds": 90
+      }
+    ]
+  },
+  {
+    "id": "lower-a",
+    "name": "Inferior A",
+    "note": "Pernas e estabilidade",
+    "updatedAt": 1,
+    "archived": false,
+    "exercises": [
+      {
+        "exerciseId": "squat",
+        "sets": 3,
+        "reps": 10,
+        "restSeconds": 90
+      },
+      {
+        "exerciseId": "romanian-deadlift",
+        "sets": 3,
+        "reps": 10,
+        "restSeconds": 90
+      },
+      {
+        "exerciseId": "leg-curl",
+        "sets": 3,
+        "reps": 10,
+        "restSeconds": 90
+      },
+      {
+        "exerciseId": "calf-raise",
+        "sets": 3,
+        "reps": 10,
+        "restSeconds": 90
+      }
+    ]
+  },
+  {
+    "id": "upper-b",
+    "name": "Superior B",
+    "note": "Costas, peito e braços",
+    "updatedAt": 1,
+    "archived": false,
+    "exercises": [
+      {
+        "exerciseId": "seated-row",
+        "sets": 3,
+        "reps": 10,
+        "restSeconds": 90
+      },
+      {
+        "exerciseId": "incline-dumbbell",
+        "sets": 3,
+        "reps": 10,
+        "restSeconds": 90
+      },
+      {
+        "exerciseId": "lateral-raise",
+        "sets": 3,
+        "reps": 10,
+        "restSeconds": 90
+      },
+      {
+        "exerciseId": "hammer-curl",
+        "sets": 3,
+        "reps": 10,
+        "restSeconds": 90
+      }
+    ]
+  }
+]

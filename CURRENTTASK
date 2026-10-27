@@ -1,0 +1,23 @@
+CURRENTTASK: First native Android + Go/React workout app.
+
+Owner scope: projects/onepunch; provisional name, gym/workout planning and logging,
+Hevy/Fitbod-style functional reference. Prefer native Android Kotlin; Go + JS/React
+web. Owner selected Português (Brasil), kg. Keep all source inside this project.
+
+Implemented: shared catalog/routines/brand, editable routines, free/routine
+sessions, set entry/completion, previous performance, rest timer, local recovery,
+finished history/volume, weekly web activity, native load records and optional
+personal API sync. Android is Compose, not a WebView/React Native wrapper.
+
+COMPLETE — first working foundation (2026-10-26).
+
+Verified: Android debug APK builds and signature verifies; 7 Kotlin/JVM tests
+pass (domain + JSON persistence/interoperability). Go race tests pass (4 cases).
+Production React build and 4 domain cases pass. Browser workflows: 116 checks
+at 1440/1024/768/390/320, including offline reload and real Go cross-client sync.
+Unreadable browser records are preserved; API responses are absent from shell
+caches. No emulator/device UI testing was performed.
+
+Owner requested GitHub push and generated-file cleanup before personally making
+and uploading a ZIP to Drive. Source-only repository; keep ready artifacts in
+build/ and web/dist locally. No ZIP, public deployment or device installation.
