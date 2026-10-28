@@ -1,5 +1,16 @@
 CURRENTTASK: Implementing the 1.0 release plan; 1.0.0-rc.1 source prepared.
 
+Latest: owner authorized a new permanent release key. Created restricted ignored
+recovery directory build/signing-recovery and configured five GitHub secrets.
+Signed candidate run 40607494288 for 3a7c705 passed: release APK, 70 JVM tests,
+13 release-tooling tests, four Go race tests, 116 browser checks, web build/domain,
+certificate/non-debuggable identity and extracted-bundle smoke validation.
+Files downloaded to build/signed-40607494288; all checksums passed. Debug RC run
+40607216559 passed too. Pending exact-artifact device report is
+docs/qa/v1_0_0_rc_1.json. Next: independent owner key backup, real-device QA,
+then final-version build and final QA before authorized stable promotion.
+No device installation or publication performed.
+
 User request: Now build it. Signed hosted candidate/promotion workflows, persistent
 release signing configuration, exact-artifact/certificate/QA checks, extracted
 Linux-bundle smoke test, readiness inventory, release operations and RC notes

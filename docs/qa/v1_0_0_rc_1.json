@@ -1,0 +1,33 @@
+{
+  "status": "pending",
+  "candidate_run_id": 40607494288,
+  "commit": "3a7c705496efe9cad4fd6bbe0c9aac7931217ec3",
+  "apk_sha256": "32f09260ba7870d6ce1efbb1f49a172ef86715b6411802b9e0758ac219ce361a",
+  "certificate_sha256": "37fae99f455f4022da3391d1c51f6d6ba72a224e8d25697624faea2023a38489",
+  "tester": "",
+  "tested_at": "",
+  "evidence": "",
+  "devices": [],
+  "coverage": {
+    "android_8": false,
+    "current_android": false,
+    "narrow_phone": false,
+    "large_fonts": false
+  },
+  "checks": {
+    "clean_install": "pending",
+    "debug_backup_transition": "pending",
+    "signed_update": "pending",
+    "offline_workout": "pending",
+    "interruption_recovery": "pending",
+    "backup_restore": "pending",
+    "sync_companion": "pending",
+    "storage_failures": "pending",
+    "accessibility": "pending",
+    "multi_day_sessions": "pending",
+    "larger_history": "pending"
+  },
+  "open_blockers": [
+    "R2"
+  ]
+}

@@ -7,6 +7,15 @@ for debug prereleases and refuses stable versions.
 
 ## Signing setup
 
+Owner authorized a new permanent release identity on 2026-10-27. The five Actions
+secrets below are configured. Public certificate SHA-256:
+`37FAE99F455F4022DA3391D1C51F6D6BA72A224E8D25697624FAEA2023A38489`.
+The owner recovery directory is `build/signing-recovery/` (ignored by Git,
+directory mode 0700 and private files 0600). It contains the PKCS12 keystore,
+credentials and public certificate. Keep a secure independent backup of the
+whole directory; its local existence is not evidence of an off-machine backup.
+Never attach that directory to an issue, release or QA handoff.
+
 Use one owner-controlled signing identity for all signed candidates and updates.
 The owner must retain a secure keystore recovery copy and its passwords; GitHub
 secrets cannot be downloaded as a backup. Losing the signing identity prevents

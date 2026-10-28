@@ -1,5 +1,20 @@
 # Progress
 
+## 2026-10-27 — signed 1.0 RC verified
+
+- Owner requested continuing the 1.0 plan and explicitly chose creation of a new
+  release signing key. Created PKCS12 recovery files with 0700 directory/0600 file
+  permissions under ignored build/signing-recovery; configured all five Actions
+  secrets without exposing their values. Independent owner backup remains needed.
+- Fast-forwarded main to reviewed RC source 3a7c705 so new workflows register.
+- Signed run 40607494288 passed: release compilation, 70 JVM tests with no failures,
+  errors or skips; 13 release-tooling tests; four Go race tests; 116 browser checks;
+  web checks/build; APK release identity/certificate and extracted Linux smoke test.
+- Downloaded onepunch-signed-candidate-40607494288 to build/signed-40607494288;
+  every checksum passed. Debug RC run 40607216559 also succeeded.
+- Prepared exact-artifact device QA report with real run/source/hash/fingerprint,
+  leaving all manual results pending. No installation or publication performed.
+
 ## 2026-10-27 — implementing the 1.0 candidate
 
 - Prepared 1.0.0-rc.1 / Android code 4 with matching web versions and RC notes.

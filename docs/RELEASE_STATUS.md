@@ -7,7 +7,8 @@ publication is included.
 
 ## Client support inventory
 
-Source-reviewed; current working-tree native changes still require hosted checks.
+Source 3a7c705 passed hosted debug and signed-release checks on 2026-10-27.
+The support table is source-reviewed; real-device behavior remains pending QA.
 
 | Capability | Native Android | Web companion |
 | --- | --- | --- |
@@ -27,11 +28,11 @@ Source-reviewed; current working-tree native changes still require hosted checks
 
 | ID | Severity | Finding / reproduction | Resolution and evidence |
 | --- | --- | --- | --- |
-| R1 | Blocker | Existing APKs use ephemeral debug signing; no signing secrets configured at review | Owner signing choice pending; release config, signed build and fingerprint gate implemented; actual key/build unverified |
+| R1 | Blocker | Existing APKs use ephemeral debug signing | Permanent owner-authorized key configured; signed run 40607494288 verified certificate and non-debuggable APK. Local recovery files preserved outside Git; independent owner key backup still needs confirmation |
 | R2 | Blocker | Device/picker/interruption and signed upgrade QA not recorded | Native QA script plus exact-artifact JSON report/promotion checks prepared; real device evidence pending |
-| R3 | Blocker | Current working tree contains native changes beyond published 0.3.0 | Source reviewed; compile/JVM checks on hosted candidate pending |
-| R4 | Blocker | Old pipeline could publish a debug APK under a stable version | Debug workflow now rejects stable settings; separate signed candidate and hash-checked promotion path implemented; regression/source checks required |
-| R5 | Blocker | Archive startup and final artifact QA not established | Clean-extraction API/web smoke check added to signed workflow; hosted execution pending |
+| R3 | Closed | Native changes beyond published 0.3.0 required verification | Signed run 40607494288 for 3a7c705 passed release compilation and 70 JVM tests, zero failures/errors/skips; debug run 40607216559 also passed |
+| R4 | Closed | Old pipeline could publish a debug APK under a stable version | Debug workflow rejects stable settings; signed candidate/promotion gates implemented. 13 release-tooling tests passed on signed run 40607494288 |
+| R5 | Automated gate passed; manual QA pending | Archive startup and final artifact QA not established | Signed run 40607494288 passed extracted Linux bundle smoke test, four Go race tests, 116 browser checks and web checks/build. Final-version/device QA remains R2 |
 
 Historical v0.3.0 hosted run 40558518832 passed 54 JVM tests, four Go race tests
 and 116 browser checks. Build-only run 40606230105 from d80e67e subsequently
@@ -44,7 +45,11 @@ workspace-envelope parsing. They remain separate from release-tooling verificati
 
 This release increment also adds raw original-record export on unreadable local
 workspace/draft screens. This preserves malformed strings for assisted recovery
-without replacing local state; its two JVM regression cases await hosted execution.
+without replacing local state; its two JVM regression cases passed in the signed run.
+
+Signed 1.0.0-rc.1 (code 4) files are in `build/signed-40607494288/`; all downloaded
+SHA256SUMS entries passed. Exact-artifact pending device report:
+`docs/qa/v1_0_0_rc_1.json`. No device tests or stable publication were performed.
 
 No blocker is closed merely because a document or check has been added. Link its
 successful hosted result/device evidence and exact source/artifact before closure.
