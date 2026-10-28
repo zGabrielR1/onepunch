@@ -1,5 +1,13 @@
 # Progress
 
+## 2026-10-27 — requested hosted rebuild
+
+- Added a `publish` workflow input; false runs all existing build/verification
+  steps and retains checked APK/API/web files as the `onepunch-build` artifact
+  without creating or replacing a release. Default release behavior is preserved.
+- Lightweight shared-data and web domain checks passed locally. Hosted build
+  result will be recorded after completion; device UI testing remains pending.
+
 ## 2026-10-27 — 0.3.0 published and verified
 
 - GitHub run 40558518832 passed and published v0.3.0 from commit

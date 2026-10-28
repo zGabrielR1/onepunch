@@ -1,5 +1,9 @@
 CURRENTTASK: Continue native Android development; builds/checks/releases run on GitHub.
 
+Current request: build the current app. Added hosted build-only mode (`publish:
+false`) retaining verified files as `onepunch-build`, without another release.
+Local lightweight checks passed; hosted result pending.
+
 Owner scope: projects/onepunch; native Kotlin/Compose workout planner/logger,
 Português (Brasil), kg, with React web companion and personal Go sync API.
 Never compile native code or generate APKs on the development PC. Use the hosted
