@@ -1,12 +1,27 @@
 # Progress
 
+## 2026-10-27 — 1.0 release plan
+
+- Added docs/RELEASE_1_0_PLAN.md and linked it from README. Defined a native-first
+  personal logger scope with web/API companion, milestones M0–M4, measurable
+  recovery/device/cross-client gates, stable signing and upgrade requirements,
+  exact-artifact release evidence, publication handoff and patch response.
+- Distinguished recorded 0.3.0 hosted results from the current working tree and
+  pending device QA. Preserved existing App.kt/WorkoutEditing.kt edits and the
+  gradlew mode difference. No feature code, versions or workflows changed.
+- Documentation reviewed against architecture, QA handoff and release scripts;
+  no compilation, tests, device installation or publication needed for this plan.
+
 ## 2026-10-27 — requested hosted rebuild
 
 - Added a `publish` workflow input; false runs all existing build/verification
   steps and retains checked APK/API/web files as the `onepunch-build` artifact
   without creating or replacing a release. Default release behavior is preserved.
-- Lightweight shared-data and web domain checks passed locally. Hosted build
-  result will be recorded after completion; device UI testing remains pending.
+- Lightweight shared-data and web domain checks passed locally. Hosted run
+  40606230105 succeeded for d80e67e: 54 Android JVM tests, four Go race tests,
+  116 browser checks, web domain/build and APK signature verification passed.
+- Downloaded APK/API/web bundle to build/hosted-40606230105 and verified all
+  SHA256SUMS entries. No release published; device UI testing remains pending.
 
 ## 2026-10-27 — 0.3.0 published and verified
 
@@ -234,3 +249,37 @@
 - Ready outputs: build/onepunch-debug.apk, build/onepunch-api, web/dist.
 - Owner requested source push to GitHub and removal of generated dependencies /
   Android build caches. No source ZIP or Drive upload performed by the agent.
+
+## 2026-10-27 — manual native rest controls (unreleased)
+
+- Active exercise menus can start/restart the configured rest without completing
+  a set; zero-second intervals disable the action. No set/history changes.
+- Added −30s beside +30s, stacked to keep timer controls compact. Shortening to
+  zero clears the persisted deadline. Extension uses actual click time if the
+  previous deadline expired, fixing a stale-tick race that could hide the timer.
+- Added three Kotlin test cases for deadline changes, expired/absent timers and
+  preservation of the session. These tests remain unrun under the native-build
+  restriction. Device UI/restart QA remains pending.
+- Passed `node --max-old-space-size=128 scripts/check-light.mjs` (27 exercises,
+  nine templates, web domain test file) and `git diff --check`. No compilation,
+  APK generation, installation or publication performed.
+
+## 2026-10-27 — three-agent native continuation (unreleased)
+
+- Owner explicitly requested three additional agents. Separate agents implemented
+  routine-draft replacement, exercise-session comparisons and persistence safety;
+  the main agent integrated both features into the native UI and reviewed diffs.
+- Routine editor replacement keeps exercise position, targets (including unfinished
+  counts), rest interval and metadata. Duplicate/unknown movements are rejected.
+  Changes use the existing persisted draft callback before closing the picker.
+- Exercise details compare the two latest valid saved sessions: sets, repetitions,
+  maximum recorded load and volume with raw differences. No comparison appears
+  until two sessions exist; no outcome/strength claims or predicted records.
+- Local workspace and backup readers now reject unsupported/missing workspace
+  versions, malformed/missing active fields and invalid sync metadata instead of
+  silently losing data. Versionless sync snapshots remain compatible.
+- Added 11 Kotlin tests (five routine replacement, three comparisons, three
+  serialization regressions); they remain uncompiled/unrun. Source review and
+  diff whitespace check passed. The lightweight check passed: 27 exercises,
+  nine templates and web domain test file. No native build, APK, device install,
+  Go compilation, browser suite, source push or publication performed.

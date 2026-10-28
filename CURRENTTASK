@@ -1,8 +1,20 @@
-CURRENTTASK: Continue native Android development; builds/checks/releases run on GitHub.
+CURRENTTASK: 1.0 release planning completed; execution gates remain pending.
+
+Latest request: build the plan for a 1.0 release. See
+docs/RELEASE_1_0_PLAN.md for scope, milestones M0–M4, acceptance criteria,
+stable signing/upgrade work, exact-artifact QA and publication handoff.
+Planning only: no implementation, version bump, hosted workflow, installation
+or publication performed. Next: M0 source/build reconciliation and capability/
+defect inventory. Existing uncommitted native changes were preserved.
+
+Previous task context follows (historical; not a new build instruction):
 
 Current request: build the current app. Added hosted build-only mode (`publish:
 false`) retaining verified files as `onepunch-build`, without another release.
-Local lightweight checks passed; hosted result pending.
+Hosted run 40606230105 succeeded for d80e67e: 54 Android JVM tests, four Go
+race tests and 116 browser checks; web build/domain and APK signature passed.
+Downloaded verified files into build/hosted-40606230105; all checksums passed.
+Device UI testing remains pending. No new release was published.
 
 Owner scope: projects/onepunch; native Kotlin/Compose workout planner/logger,
 Português (Brasil), kg, with React web companion and personal Go sync API.
@@ -41,3 +53,13 @@ any existing installation with personal data.
 Preserve personal records and unrelated edits, including the pre-existing
 android/gradlew executable-mode difference. Do not install on devices, change
 repository visibility or upload to Drive. Full implementation history: PROGRESS.md.
+
+Next native source increment (unreleased): manual rest start from each active
+exercise menu, −30s/+30s controls and click-time expiry handling. Source-only
+check passed; WorkoutRestTest added but not compiled/run. No new APK or release.
+
+Additional unreleased native work completed with three agents: routine draft
+exercise replacement preserving position/targets; factual two-session exercise
+comparisons; strict local workspace-envelope reading to preserve malformed data.
+11 new Kotlin regression tests added for this increment; not compiled/run.
+Lightweight shared/web checks and diff whitespace checks passed. No publication.
