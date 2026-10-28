@@ -9,6 +9,25 @@ data class RoutineDraft(
     val isNew: Boolean = false,
 )
 
+/** Change a draft's movement without losing its position or unfinished targets. */
+fun replaceRoutineExercise(
+    draft: Routine,
+    exerciseId: String,
+    replacementId: String,
+    catalog: List<Exercise>,
+): Routine {
+    val index = draft.exercises.indexOfFirst { it.exerciseId == exerciseId }
+    require(index >= 0) { "O exercício original não está mais nesta rotina." }
+    require(catalog.any { it.id == replacementId }) { "Escolha um exercício do catálogo." }
+    if (exerciseId == replacementId) return draft
+    require(draft.exercises.none { it.exerciseId == replacementId }) {
+        "O exercício escolhido já está nesta rotina."
+    }
+    return draft.copy(exercises = draft.exercises.mapIndexed { i, spec ->
+        if (i == index) spec.copy(exerciseId = replacementId) else spec
+    })
+}
+
 fun copyRoutineTemplate(template: Routine, now: Long = System.currentTimeMillis()): Routine =
     template.copy(
         id = uid(),

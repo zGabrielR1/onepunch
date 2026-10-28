@@ -49,3 +49,21 @@ fun replaceWorkoutExercise(
     val sets = active.sets.filterNot { it.exerciseId == exerciseId && !it.done } + generated
     return active.copy(exercises = exercises, sets = workoutSetsInExerciseOrder(sets, exercises))
 }
+
+/** Adjust the persisted deadline using click time, never a stale UI timer tick. */
+fun adjustWorkoutRest(active: ActiveWorkout, seconds: Int, now: Long): ActiveWorkout {
+    require(seconds == -30 || seconds == 30) { "Ajuste o descanso em 30 segundos." }
+    val deadline = active.restUntil ?: return active
+    // A shortening action must never revive an expired timer.
+    if (seconds < 0 && deadline <= now) return active.copy(restUntil = null)
+    val adjusted = maxOf(deadline, now) + seconds * 1000L
+    return active.copy(restUntil = adjusted.takeIf { it > now })
+}
+
+fun startWorkoutRest(active: ActiveWorkout, exerciseId: String, now: Long): ActiveWorkout {
+    val spec = active.exercises.firstOrNull { it.exerciseId == exerciseId } ?: return active
+    require(spec.restSeconds in 0..600) { "Descanso deve estar entre 0 e 600 segundos." }
+    // A disabled interval must not cancel another exercise's running rest.
+    if (spec.restSeconds == 0) return active
+    return active.copy(restUntil = now + spec.restSeconds * 1000L)
+}

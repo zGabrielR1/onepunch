@@ -333,7 +333,7 @@ fun OnepunchApp() {
                     checkNotNull(output) { "Não foi possível abrir o destino." }
                     output.bufferedWriter(Charsets.UTF_8).use { it.write(payload) }
                 }
-                dataMessage = "Backup exportado. Guarde o arquivo em um local seguro."
+                dataMessage = "Arquivo exportado. Guarde-o em um local seguro."
             } catch (e: Exception) {
                 dataError = e.message ?: "Não foi possível exportar o backup."
             } finally { dataBusy = false }
@@ -354,6 +354,16 @@ fun OnepunchApp() {
             } catch (e: Exception) {
                 dataError = e.message ?: "Não foi possível ler este backup."
             } finally { dataBusy = false }
+        }
+    }
+    fun exportOriginalRecords() {
+        try {
+            dataError = null
+            dataMessage = null
+            exportPayload = store.exportOriginalRecords()
+            exportDocument.launch("onepunch-registros-originais-${LocalDate.now()}.json")
+        } catch (e: Exception) {
+            dataError = e.message ?: "Não foi possível exportar os registros originais."
         }
     }
     LaunchedEffect(Unit) {
@@ -394,6 +404,13 @@ fun OnepunchApp() {
                         "Seus dados precisam de atenção.",
                         "Não sobrescrevemos o registro local porque não foi possível abri-lo. Seus dados foram preservados neste dispositivo.",
                     )
+                    Text("Exporte uma cópia dos registros originais para recuperação assistida. Este arquivo não pode ser importado como um backup comum. Ele contém dados pessoais em texto simples.")
+                    PrimaryButton("Exportar registros originais", Icons.Outlined.SaveAlt, enabled = !dataBusy) {
+                        exportOriginalRecords()
+                    }
+                    if (dataBusy) Text("Exportando… aguarde.")
+                    dataError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    dataMessage?.let { Text(it) }
                 }
             }
             return@MaterialTheme
@@ -922,17 +939,23 @@ fun OnepunchApp() {
                                                         fontWeight = FontWeight.SemiBold,
                                                     )
                                                 }
-                                                TextButton(
-                                                    onClick = {
-                                                        updateActive {
-                                                            it.copy(
-                                                                restUntil =
-                                                                    (it.restUntil ?: now) + 30000,
-                                                            )
-                                                        }
-                                                    },
-                                                ) {
-                                                    Text("+30 s")
+                                                Column {
+                                                    TextButton(
+                                                        onClick = {
+                                                            updateActive {
+                                                                adjustWorkoutRest(it, -30, System.currentTimeMillis())
+                                                            }
+                                                        },
+                                                    ) { Text("−30 s") }
+                                                    TextButton(
+                                                        onClick = {
+                                                            updateActive {
+                                                                adjustWorkoutRest(it, 30, System.currentTimeMillis())
+                                                            }
+                                                        },
+                                                    ) {
+                                                        Text("+30 s")
+                                                    }
                                                 }
                                                 IconButton(
                                                     onClick = {
@@ -1010,6 +1033,14 @@ fun OnepunchApp() {
                                                         onClick = {
                                                             exerciseMenu = false
                                                             detail = e
+                                                        },
+                                                    )
+                                                    DropdownMenuItem(
+                                                        text = { Text("Iniciar descanso (${spec.restSeconds}s)") },
+                                                        enabled = spec.restSeconds > 0,
+                                                        onClick = {
+                                                            exerciseMenu = false
+                                                            updateActive { startWorkoutRest(it, e.id, System.currentTimeMillis()) }
                                                         },
                                                     )
                                                     DropdownMenuItem(
@@ -1653,6 +1684,7 @@ fun OnepunchApp() {
                         exportDocument.launch("onepunch-${if (previous) "antes-da-restauracao" else "backup"}-${LocalDate.now()}.json")
                     } catch (e: Exception) { dataError = e.message ?: "Não foi possível preparar o backup." }
                 },
+                onExportOriginals = { exportOriginalRecords() },
                 onImport = {
                     pendingImport = null
                     dataError = null
@@ -1752,6 +1784,7 @@ private fun BackupDialog(
     hasPrevious: Boolean,
     onDismiss: () -> Unit,
     onExport: (Boolean) -> Unit,
+    onExportOriginals: () -> Unit,
     onImport: () -> Unit,
     onCancelImport: () -> Unit,
     onRestore: () -> Unit,
@@ -1768,6 +1801,12 @@ private fun BackupDialog(
                 color = Muted, fontSize = 13.sp,
             )
             if (blocked) Text("Há um rascunho local ilegível. Os dados foram preservados; exportação e importação estão bloqueadas para não perdê-lo.", color = MaterialTheme.colorScheme.error)
+            if (blocked) {
+                Text("Exporte os registros originais para recuperação assistida. Esse arquivo contém dados pessoais e não é um backup importável.", color = Muted, fontSize = 13.sp)
+                OutlinedButton(onClick = onExportOriginals, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
+                    Text("Exportar registros originais")
+                }
+            }
             if (busy) Text("Processando… aguarde.", color = Muted)
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             message?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
@@ -1911,6 +1950,7 @@ private fun ExerciseDetails(
     onTrain: () -> Unit,
 ) {
     val history = remember(workouts, exercise.id) { exerciseHistory(workouts, exercise.id) }
+    val comparison = remember(workouts, exercise.id) { compareExerciseSessions(workouts, exercise.id) }
     FullScreenSheet(exercise.name, onDismiss) {
         LazyColumn(
             Modifier.weight(1f),
@@ -1965,6 +2005,28 @@ private fun ExerciseDetails(
                             color = Muted,
                             fontSize = 12.sp,
                         )
+                    }
+                }
+                comparison?.let { values ->
+                    item {
+                        Panel {
+                            Eyebrow("DUAS ÚLTIMAS SESSÕES")
+                            Text("${date(values.latest.endedAt, includeYear = true)} comparado com ${date(values.previous.endedAt, includeYear = true)}", fontSize = 13.sp)
+                            fun signed(value: Double): String = if (value > 0) "+${fmt(value)}" else fmt(value)
+                            val rows = listOf(
+                                Triple("Séries (anterior: ${values.previous.setCount})", values.latest.setCount.toString(), signed(values.setCountDifference.toDouble())),
+                                Triple("Repetições (anterior: ${values.previous.totalReps})", values.latest.totalReps.toString(), signed(values.totalRepsDifference.toDouble())),
+                                Triple("Maior carga (anterior: ${fmt(values.previous.maximumWeight)} kg)", "${fmt(values.latest.maximumWeight)} kg", "${signed(values.maximumWeightDifference)} kg"),
+                                Triple("Volume (anterior: ${fmt(values.previous.totalVolume)} kg)", "${fmt(values.latest.totalVolume)} kg", "${signed(values.totalVolumeDifference)} kg"),
+                            )
+                            rows.forEach { (label, latest, difference) ->
+                                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                    Text(label, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                    Text("Última: $latest · Diferença: $difference", color = Muted, fontSize = 12.sp)
+                                }
+                            }
+                            Text("Diferenças entre registros salvos; séries, cargas e repetições podem variar entre sessões.", color = Muted, fontSize = 12.sp)
+                        }
                     }
                 }
                 item { Eyebrow("SESSÕES · MAIS RECENTES PRIMEIRO") }
@@ -2425,6 +2487,7 @@ private fun RoutineEditor(
     val original = session.original
     val draft = session.draft
     var picking by remember { mutableStateOf(false) }
+    var replacingExercise by remember { mutableStateOf<String?>(null) }
     var confirmDiscard by remember { mutableStateOf(false) }
     val lookup = catalog.associateBy { it.id }
     val requestDismiss: () -> Unit = {
@@ -2519,6 +2582,9 @@ private fun RoutineEditor(
                         ) {
                             Icon(Icons.Outlined.Close, "Remover exercício", Modifier.size(17.dp))
                         }
+                    }
+                    TextButton(onClick = { replacingExercise = spec.exerciseId }) {
+                        Text("Substituir exercício")
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         OutlinedTextField(
@@ -2620,6 +2686,11 @@ private fun RoutineEditor(
     if (picking)
         ExercisePicker(catalog, draft.exercises.map { it.exerciseId }, onDismiss = { picking = false }) {
             if (onChange(draft.copy(exercises = draft.exercises + ExerciseSpec(it.id)))) picking = false
+        }
+    val sourceId = replacingExercise
+    if (sourceId != null)
+        ExercisePicker(catalog, draft.exercises.map { it.exerciseId }, onDismiss = { replacingExercise = null }) { exercise ->
+            if (onChange(replaceRoutineExercise(draft, sourceId, exercise.id, catalog))) replacingExercise = null
         }
     if (confirmDiscard)
         AlertDialog(

@@ -10,6 +10,50 @@ class RoutineDraftTest {
         exercises = listOf(ExerciseSpec("squat")),
     )
 
+    private val catalog = listOf("squat", "leg-press", "bench").map {
+        Exercise(it, it, "Pernas", "Máquina", "Exemplo")
+    }
+
+    @Test
+    fun replacementPreservesDraftOrderTargetsAndMetadataWithoutEditingOriginal() {
+        val draft = original.copy(note = "Nota", exercises = listOf(
+            ExerciseSpec("bench", sets = 2),
+            ExerciseSpec("squat", sets = 5, reps = 12, restSeconds = 180),
+        ))
+        val changed = replaceRoutineExercise(draft, "squat", "leg-press", catalog)
+        assertEquals(draft.copy(exercises = listOf(
+            draft.exercises.first(), draft.exercises.last().copy(exerciseId = "leg-press"),
+        )), changed)
+        assertEquals("squat", draft.exercises.last().exerciseId)
+        assertEquals(original, RoutineDraft(original, changed).original)
+    }
+
+    @Test
+    fun replacementRetainsIncompleteCountsAndRoundTripsThroughRecovery() {
+        val draft = original.copy(exercises = listOf(ExerciseSpec("squat", sets = 0, reps = 0)))
+        val changed = replaceRoutineExercise(draft, "squat", "leg-press", catalog)
+        assertFalse(routineValid(changed))
+        val session = RoutineDraft(original, changed)
+        assertEquals(session, routineDraftFrom(JSONObject(routineDraftJson(session).toString())))
+        assertSame(draft, replaceRoutineExercise(draft, "squat", "squat", catalog))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun replacementRejectsDuplicateMovement() {
+        val draft = original.copy(exercises = original.exercises + ExerciseSpec("bench"))
+        replaceRoutineExercise(draft, "squat", "bench", catalog)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun replacementRejectsMissingSource() {
+        replaceRoutineExercise(original, "missing", "leg-press", catalog)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun replacementRejectsUnknownCatalogExercise() {
+        replaceRoutineExercise(original, "squat", "unknown", catalog)
+    }
+
     @Test
     fun templateCopiesHaveFreshIdentityAndNeverReplaceTheTemplate() {
         val copy = copyRoutineTemplate(original, now = 30)

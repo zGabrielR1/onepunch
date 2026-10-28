@@ -1,0 +1,133 @@
+name: Signed release candidate
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: onepunch-signed-candidate
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  candidate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Validate source versions and release notes
+        run: python scripts/release_config.py >> "$GITHUB_ENV"
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: server/go.mod
+          cache: false
+      - name: Install Android SDK packages on hosted runner
+        run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"'
+      - name: Validate and restore owner signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ONEPUNCH_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ONEPUNCH_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ONEPUNCH_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ONEPUNCH_KEY_PASSWORD }}
+          CERT_SHA256: ${{ secrets.ONEPUNCH_CERT_SHA256 }}
+        run: |
+          for setting in KEYSTORE_BASE64 STORE_PASSWORD KEY_ALIAS KEY_PASSWORD CERT_SHA256; do
+            if [[ -z "${!setting}" ]]; then echo "Missing signing secret: $setting"; exit 1; fi
+          done
+          umask 077
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/onepunch-release.jks"
+      - name: Signed release APK and release JVM tests (hosted only)
+        working-directory: android
+        env:
+          ONEPUNCH_KEYSTORE_PATH: ${{ runner.temp }}/onepunch-release.jks
+          ONEPUNCH_KEYSTORE_PASSWORD: ${{ secrets.ONEPUNCH_KEYSTORE_PASSWORD }}
+          ONEPUNCH_KEY_ALIAS: ${{ secrets.ONEPUNCH_KEY_ALIAS }}
+          ONEPUNCH_KEY_PASSWORD: ${{ secrets.ONEPUNCH_KEY_PASSWORD }}
+        run: bash ./gradlew --no-daemon --max-workers=2 :app:assembleRelease :app:testReleaseUnitTest
+      - name: Release tooling regression checks
+        run: python -m unittest discover -s scripts -p 'test_release*.py'
+      - name: Web domain checks and production bundle
+        run: |
+          npm ci --prefix web --no-audit --no-fund
+          node --max-old-space-size=128 scripts/check-light.mjs
+          npm run build --prefix web
+      - name: Go race checks and Linux binary
+        working-directory: server
+        run: |
+          go test -race -json ./... > ../build-go-tests.json
+          mkdir -p ../build
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -buildvcs=false -o ../build/onepunch-api .
+      - name: Install isolated browser QA tooling
+        run: |
+          npm install --prefix "$RUNNER_TEMP/browser-qa" --no-save --no-audit --no-fund playwright@1.56.1
+          node "$RUNNER_TEMP/browser-qa/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Browser workflows with disposable API data
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/browser-qa/node_modules/playwright/index.mjs
+        run: |
+          build/onepunch-api -addr 127.0.0.1:8098 -data "$RUNNER_TEMP/onepunch-qa-state.json" -catalog shared/catalog.json -web web/dist > "$RUNNER_TEMP/onepunch-api.log" 2>&1 &
+          api_pid=$!
+          trap 'kill "$api_pid"' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8098/api/health >/dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:8098/api/health
+          node scripts/check_web.mjs | tee build-browser-checks.txt
+      - name: Verify release identity and assemble candidate files
+        env:
+          ANDROID_VARIANT: release
+          ONEPUNCH_CERT_SHA256: ${{ secrets.ONEPUNCH_CERT_SHA256 }}
+        run: |
+          mkdir -p build/release/onepunch-linux-amd64/{server,shared,web}
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs android/app/build/outputs/apk/release/app-release.apk > build/release/apk-signature.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging android/app/build/outputs/apk/release/app-release.apk > build/release/apk-badging.txt
+          cp android/app/build/outputs/apk/release/app-release.apk "build/release/onepunch-$RELEASE_TAG.apk"
+          cp build/onepunch-api build/release/onepunch-linux-amd64/server/
+          cp shared/catalog.json shared/routines.json shared/brand.properties build/release/onepunch-linux-amd64/shared/
+          cp -r web/dist build/release/onepunch-linux-amd64/web/
+          cp docs/DISTRIBUTION.md build/release/onepunch-linux-amd64/README.md
+          tar -czf "build/release/onepunch-$RELEASE_TAG-linux-amd64.tar.gz" -C build/release onepunch-linux-amd64
+          python scripts/check_release_bundle.py
+          python scripts/release_manifest.py
+          cd build/release
+          sha256sum ./*.apk ./*.tar.gz verification.json apk-signature.txt apk-badging.txt > SHA256SUMS.txt
+      - name: Retain hosted verification reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: onepunch-signed-verification-${{ github.run_id }}
+          retention-days: 90
+          if-no-files-found: warn
+          path: |
+            android/app/build/test-results/
+            build-go-tests.json
+            build-browser-checks.txt
+            /tmp/onepunch-qa/
+            build/release/verification.json
+      - name: Retain verified build files
+        uses: actions/upload-artifact@v7
+        with:
+          name: onepunch-signed-candidate-${{ github.run_id }}
+          retention-days: 90
+          path: |
+            build/release/*.apk
+            build/release/*.tar.gz
+            build/release/verification.json
+            build/release/apk-signature.txt
+            build/release/apk-badging.txt
+            build/release/SHA256SUMS.txt
+      - name: Remove temporary signing key
+        if: always()
+        run: python -c "from pathlib import Path; Path('$RUNNER_TEMP/onepunch-release.jks').unlink(missing_ok=True)"

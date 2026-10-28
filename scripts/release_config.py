@@ -23,6 +23,8 @@ def read_release_config():
         raise ValueError("Invalid Android version code")
     if values["prerelease"] not in ("true", "false"):
         raise ValueError("Invalid prerelease setting")
+    if "-" in version and values["prerelease"] != "true":
+        raise ValueError("A candidate version cannot be marked stable")
     package = json.loads((ROOT / "web/package.json").read_text())
     lock = json.loads((ROOT / "web/package-lock.json").read_text())
     if any(value != version for value in (package["version"], lock["version"], lock["packages"][""]["version"])):

@@ -7,6 +7,13 @@ the training flows of apps such as Hevy. The name is provisional.
 **API:** Go, compiled to a native executable. Portuguese (Brazil), kilograms.
 No React Native or WebView is used in the Android app.
 
+The [1.0 release plan](docs/RELEASE_1_0_PLAN.md) defines the stable-release scope,
+signing/upgrade work, device QA gates and delivery checklist.
+See [release operations](docs/RELEASE_OPERATIONS.md) for signed hosted candidates
+and exact-artifact promotion, and [readiness status](docs/RELEASE_STATUS.md) for
+the client capability inventory and open release blockers. The source is now a
+1.0.0-rc.1 candidate; 0.3.0 below remains the last published version.
+
 ## What works
 
 - Android history search by workout/exercise/equipment/note, with accent-insensitive

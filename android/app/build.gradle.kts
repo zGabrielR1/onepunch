@@ -15,6 +15,8 @@ val releaseVersion = Properties().apply {
     rootProject.file("../shared/release.properties").reader(Charsets.UTF_8).use { load(it) }
 }
 
+val releaseStore = System.getenv("ONEPUNCH_KEYSTORE_PATH")
+
 android {
     namespace = "app.onepunch"
     compileSdk = 36
@@ -32,6 +34,26 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     sourceSets["main"].assets.srcDir("../../shared")
+    signingConfigs {
+        if (!releaseStore.isNullOrBlank()) {
+            create("ownerRelease") {
+                storeFile = file(releaseStore)
+                storePassword = System.getenv("ONEPUNCH_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ONEPUNCH_KEY_ALIAS")
+                keyPassword = System.getenv("ONEPUNCH_KEY_PASSWORD")
+            }
+        }
+    }
+    buildTypes {
+        getByName("release") {
+            isDebuggable = false
+            // Signing is required by hosted candidate verification. Without owner
+            // credentials Gradle may produce only an unsigned local artifact.
+            if (!releaseStore.isNullOrBlank()) {
+                signingConfig = signingConfigs.getByName("ownerRelease")
+            }
+        }
+    }
 }
 
 kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }

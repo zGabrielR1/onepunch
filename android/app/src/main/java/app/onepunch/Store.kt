@@ -113,7 +113,27 @@ fun workspaceJson(s: Workspace, syncing: Boolean = false): JSONObject {
     return o
 }
 
-fun workspaceFrom(o: JSONObject): Workspace {
+fun workspaceFrom(o: JSONObject, local: Boolean = false): Workspace {
+    // Sync snapshots intentionally omit local-only envelope fields. Persisted data
+    // must declare a supported version before it can become writable UI state.
+    if (local || o.has("version")) {
+        val version = o.get("version")
+        require(version is Number && version.toDouble() == 1.0) {
+            "Versão de dados desconhecida. Os dados originais foram preservados."
+        }
+    }
+    require(!local || o.has("active")) { "Treino em andamento ausente nos dados locais." }
+    require(!o.has("active") || o.isNull("active") || o.get("active") is JSONObject) {
+        "Treino em andamento malformado. Os dados originais foram preservados."
+    }
+    val lastSyncedAt = if (o.isNull("lastSyncedAt")) null else {
+        val value = o.get("lastSyncedAt")
+        val timestamp = if (value is Number) {
+            runCatching { java.math.BigDecimal(value.toString()).longValueExact() }.getOrNull()
+        } else null
+        require(timestamp != null && timestamp > 0) { "Data de sincronização inválida." }
+        timestamp
+    }
     val routines = o.getJSONArray("routines").objects().map(::routineFrom)
     val workouts =
         o.getJSONArray("workouts").objects().map { w ->
@@ -145,7 +165,7 @@ fun workspaceFrom(o: JSONObject): Workspace {
         routines,
         workouts,
         active,
-        if (o.isNull("lastSyncedAt")) null else o.optLong("lastSyncedAt").takeIf { it > 0 },
+        lastSyncedAt,
     )
 }
 
@@ -169,7 +189,7 @@ class StateStore(context: Context) {
             .map(::routineFrom)
 
     fun load(): Workspace =
-        prefs.getString("workspace", null)?.let { workspaceFrom(JSONObject(it)) }
+        prefs.getString("workspace", null)?.let { workspaceFrom(JSONObject(it), local = true) }
             ?: Workspace(routines = routineTemplates)
 
     fun save(s: Workspace, clearRoutineDraft: Boolean = false) {
@@ -202,6 +222,8 @@ class StateStore(context: Context) {
     }
 
     fun previousRestoreBackup(): String? = prefs.getString("restoreSafetyBackup", null)
+
+    fun exportOriginalRecords(): String = recoveryDocument(prefs.all)
 
     fun restoreBackup(previous: WorkoutBackup, next: BackupRestorePlan) {
         // Preserve an unreadable prior safety copy rather than silently overwriting it.

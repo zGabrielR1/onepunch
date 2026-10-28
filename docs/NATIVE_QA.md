@@ -1,5 +1,24 @@
 # Native QA handoff
 
+## 1.0 candidate additions (pending)
+
+- Use the exact candidate APK/hash from hosted artifacts; complete
+  docs/qa/device-report.template.json after running the detailed scenarios below.
+  Check clean installation, debug-backup transition, signed RC-to-final update,
+  Android 8/current Android, narrow phone, large fonts and TalkBack core controls.
+- Inject unreadable workspace/draft data into a disposable test installation.
+  From the blocked workspace screen or blocked draft Backup e dados screen,
+  export original records. Verify exact original strings, including malformed JSON,
+  are present in originalPreferences, with no server setting. Cancelling/retrying,
+  process recreation and output failures must never claim success incorrectly.
+  This recovery document is not a normal backup: attempting normal import must
+  reject it without changing state. Export must not mutate local preferences.
+- Run three complete disposable workout sessions across multiple days; record
+  behavior with larger history and confirm date grouping/recovery. Record actual
+  device/model/OS, source, run, hashes, results and any open blockers.
+- Historical 0.3.0 and d80e67e hosted passes do not validate current native changes.
+  Compile/JVM checks remain hosted-only; no local emulator or APK builds.
+
 0.3.0 (source 738a12b) passed hosted Android compilation, 54 JVM tests, four Go race
 tests and 116 browser checks. Device UI QA below is still pending. Do not compile
 or launch an emulator on the development PC; use the separate testing machine.
@@ -242,3 +261,26 @@ it: archive, restore, set removal and rest selection must not replace in-memory
 state before a successful save, and failure must be surfaced to the user.
 
 Record device/OS, build result, JVM test result and device findings separately.
+
+## Unreleased manual rest controls
+
+- Start rest from an active exercise menu without completing a set; confirm the
+  configured duration and unchanged sets/volume. A zero-second interval disables
+  the action. Starting another rest replaces only the current deadline.
+- Shorten/extend by 30s; shortening with <=30s remaining hides the timer. Try a
+  click at expiry and confirm shortening cannot restart it; extension grants 30s.
+- Background/restart during rest and confirm the absolute deadline survives.
+  Check compact widths and large font sizes for all timer controls.
+
+## Unreleased routine, comparison and persistence checks
+
+- Replace a routine exercise after editing its sets/reps/rest; verify position and
+  targets survive, then restart and resume the draft. Cancel the picker and check
+  duplicate exercises cannot be selected. Saved routines/history stay unchanged
+  until routine save. Verify storage-write errors leave the picker open.
+- With fewer than two valid saved sessions for an exercise, show no comparison.
+  With two, check previous/latest values and signed differences against the saved
+  rows, including zero kg and differing row counts. Open original session details.
+- In a disposable test profile, use malformed local version/active/sync timestamp
+  fields and confirm loading is blocked while original preferences are preserved.
+  Confirm normal local recovery, backup restore and versionless API sync still work.

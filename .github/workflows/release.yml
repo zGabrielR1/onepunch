@@ -25,6 +25,14 @@ jobs:
           persist-credentials: false
       - name: Validate source versions and release notes
         run: python scripts/release_config.py >> "$GITHUB_ENV"
+      - name: Keep debug builds out of stable releases
+        run: |
+          if [[ "$RELEASE_PRERELEASE" != "true" ]]; then
+            echo 'Stable releases require the signed candidate and promotion workflows.'
+            exit 1
+          fi
+      - name: Release tooling regression checks
+        run: python -m unittest discover -s scripts -p 'test_release*.py'
       - name: Refuse to replace an existing release
         if: inputs.publish
         env:

@@ -1,0 +1,75 @@
+name: Promote checked stable release
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_run:
+        description: Successful Signed release candidate run ID (final version)
+        type: string
+        required: true
+      qa_report:
+        description: Committed device QA JSON path under docs/qa/
+        type: string
+        required: true
+      publish:
+        description: Publish stable release (false only validates the handoff)
+        type: boolean
+        default: false
+
+concurrency:
+  group: onepunch-stable-promotion
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Download the existing candidate without rebuilding
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE_RUN: ${{ inputs.candidate_run }}
+          QA_REPORT: ${{ inputs.qa_report }}
+        run: |
+          [[ "$CANDIDATE_RUN" =~ ^[0-9]+$ ]]
+          [[ "$QA_REPORT" =~ ^docs/qa/[a-zA-Z0-9_-]+\.json$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$CANDIDATE_RUN" > candidate-run.json
+          gh run download "$CANDIDATE_RUN" --repo "$GITHUB_REPOSITORY" --name "onepunch-signed-candidate-$CANDIDATE_RUN" --dir candidate
+      - name: Check hashes, release identity and exact-artifact device QA
+        env:
+          QA_REPORT: ${{ inputs.qa_report }}
+          ONEPUNCH_CERT_SHA256: ${{ secrets.ONEPUNCH_CERT_SHA256 }}
+        run: |
+          python scripts/promote_release.py --directory candidate --qa "$QA_REPORT" --run candidate-run.json >> "$GITHUB_ENV"
+          cp "$QA_REPORT" candidate/device-qa.json
+      - name: Read release notes from the candidate source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/contents/docs/releases/$RELEASE_TAG.md?ref=$RELEASE_SHA" --jq .content | base64 --decode > candidate/RELEASE_NOTES.md
+          test -s candidate/RELEASE_NOTES.md
+      - name: Publish the checked files as a stable release
+        if: inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" >/dev/null 2>&1; then
+            echo 'Tag already exists; use a new release version.'
+            exit 1
+          fi
+          gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --target "$RELEASE_SHA" --title "Onepunch $RELEASE_TAG" \
+            --notes-file candidate/RELEASE_NOTES.md \
+            candidate/*.apk candidate/*.tar.gz candidate/verification.json \
+            candidate/apk-signature.txt candidate/apk-badging.txt candidate/SHA256SUMS.txt \
+            candidate/device-qa.json

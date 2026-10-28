@@ -99,7 +99,7 @@ fun decodeBackup(raw: String, knownExercises: Set<String>): WorkoutBackup {
         checkSpecs(it.getJSONObject("draft"))
         routineDraftFrom(it)
     }
-    val workspace = workspaceFrom(data)
+    val workspace = workspaceFrom(data, local = true)
     fun ids(values: List<String>) {
         require(values.all { it.isNotBlank() && it.length <= 100 } && values.distinct().size == values.size) {
             "O backup contém identificadores vazios ou duplicados."

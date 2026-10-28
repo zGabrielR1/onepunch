@@ -1,5 +1,28 @@
 # Progress
 
+## 2026-10-27 — implementing the 1.0 candidate
+
+- Prepared 1.0.0-rc.1 / Android code 4 with matching web versions and RC notes.
+  Reviewed existing manual rest, draft replacement, exercise comparison and strict
+  local-envelope changes for inclusion; preserved gradlew's unrelated mode change.
+- Added owner-release signing config, a hosted signed-candidate workflow,
+  certificate/application/version/non-debuggable checks, exact asset hashes and
+  extracted Linux archive smoke test. Debug workflow now rejects stable settings.
+- Added stable promotion of existing files without rebuilding, requiring successful
+  candidate provenance, matching checksums, expected certificate and exact-artifact
+  device evidence. Promotion defaults to validation only; no publication performed.
+- Added original-record export from unreadable native workspace/draft screens:
+  raw values are preserved without parsing, with explicit recovery-file wording.
+  Added two RecoveryTest JVM cases for hosted execution.
+- Added distribution/upgrade instructions, client capability inventory, blocker
+  ledger, signing operations and pending device QA template. Signing-key choice
+  requested; repository had no signing secrets. Device tests remain pending.
+- 13 dependency-free Python regression tests passed; lightweight shared/web checks,
+  version consistency, actionlint workflow validation and whitespace checks passed.
+  No local native compilation, dependency installation, emulator or browser suite.
+- Reconciled earlier build-only run 40606230105 from d80e67e: successful; publication
+  skipped. That source predates the new candidate and its results are historical.
+
 ## 2026-10-27 — 1.0 release plan
 
 - Added docs/RELEASE_1_0_PLAN.md and linked it from README. Defined a native-first

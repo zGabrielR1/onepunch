@@ -81,7 +81,10 @@ both versions. Unknown/unreadable draft records are left untouched and routine
 editing is blocked, while existing workouts and sync remain usable.
 
 The timer persists an absolute deadline, so backgrounding/reloading does not reset
-it. This build does not schedule system alarms or promise background alerts.
+it. Native exercise menus can manually start/restart the configured rest without
+completing sets; zero-second intervals disable manual start. Active timers allow
+30-second adjustments; shortening to zero clears the deadline, while extending
+an expired deadline starts 30 seconds from click time. This build does not schedule system alarms or promise background alerts.
 
 ## Native backup and restore
 
@@ -108,9 +111,24 @@ separate from the pure merge/validation tests.
 
 ## Hosted releases
 
+Signed candidate builds use `.github/workflows/candidate.yml`, owner-controlled
+signing secrets, non-debuggable release APKs and release-variant JVM tests. The
+manifest includes source, artifact hashes and certificate fingerprint. The Linux
+archive is extracted and smoke-tested against disposable data on the hosted runner.
+`promote.yml` checks the existing candidate and exact-artifact device QA before
+uploading the same files as stable, without rebuilding. The debug workflow rejects
+stable release settings. See docs/RELEASE_OPERATIONS.md for setup and handoff.
+
 Release identity is owned by `shared/release.properties` (version, Android version
 code and prerelease flag). Gradle reads it directly; hosted CI validates web package
 versions and matching release notes before creating assets, tags or releases.
+
+When local workspace/draft decoding fails, Android offers a raw recovery export
+through the system picker. `onepunch.recovery` version 1 preserves original
+workspace, routineDraft and restoreSafetyBackup preference values without parsing
+or overwriting them. It excludes server settings and is explicitly not a normal
+importable backup. This gives users a recovery copy from signed installations
+without requiring debug access; device file-picker QA still applies.
 
 ## Sync API
 
@@ -174,3 +192,14 @@ testing remains separate and pending (docs/NATIVE_QA.md). Browser workflows use 
 real temporary Go API and isolated browser profiles, not fabricated production
 history. All UI artwork is original CSS/SVG/native vectors, with no copied assets
 from the reference apps.
+
+## Unreleased native additions
+
+Routine draft exercise replacement preserves row position and targets, including
+unfinished counts, and persists through the existing draft flow. Exercise detail
+comparisons use the two latest sessions containing valid completed sets for that
+exercise, with deterministic timestamp-tie ordering and factual differences only.
+Local workspace loading requires the version-1 envelope and explicit active field;
+malformed active data and invalid sync timestamps fail without replacing storage.
+Sync responses may still omit local-only fields. Native compilation/device QA for
+these additions remains pending; the 0.3.0 results above apply to released source.

@@ -1,11 +1,22 @@
-CURRENTTASK: 1.0 release planning completed; execution gates remain pending.
+CURRENTTASK: Implementing the 1.0 release plan; 1.0.0-rc.1 source prepared.
 
-Latest request: build the plan for a 1.0 release. See
-docs/RELEASE_1_0_PLAN.md for scope, milestones M0–M4, acceptance criteria,
-stable signing/upgrade work, exact-artifact QA and publication handoff.
-Planning only: no implementation, version bump, hosted workflow, installation
-or publication performed. Next: M0 source/build reconciliation and capability/
-defect inventory. Existing uncommitted native changes were preserved.
+User request: Now build it. Signed hosted candidate/promotion workflows, persistent
+release signing configuration, exact-artifact/certificate/QA checks, extracted
+Linux-bundle smoke test, readiness inventory, release operations and RC notes
+are implemented. Added raw original-record recovery export for unreadable native
+workspace/draft data. Source review includes existing native feature increments.
+
+Local checks: 13 dependency-free Python release regression cases, lightweight
+shared/web checks, release-version validation, actionlint and diff whitespace pass.
+No local native compiler, Gradle/Go build, emulator or browser suite run.
+Owner signing-key choice requested; no signing secrets existed at inspection.
+Do not invent signing or device evidence. Device QA is still pending.
+
+Prior build-only run 40606230105 (d80e67e) completed successfully; its results do
+not verify this new source. Next: hosted build-only verification of RC source;
+configure owner signing after their choice, then signed candidate and device QA.
+No publication/device installation authorized by this implementation step.
+Preserve the pre-existing android/gradlew executable-mode difference.
 
 Previous task context follows (historical; not a new build instruction):
 
