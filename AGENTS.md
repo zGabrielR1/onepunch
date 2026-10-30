@@ -23,19 +23,19 @@ Read CURRENTTASK, PROGRESS.md and ARCHITECTURE.md before continuing.
 
 ## Structure and checks
 
-- Owner authorized a GitHub prerelease on 2026-10-27. Native compilation and
-  verification may run on GitHub-hosted runners, never on this development PC.
-  Use the manual Hosted prerelease workflow; publish only current checked assets.
+- Owner update (2026-10-29): local testing and compilation are now authorized
+  provided compilation has a maximum RAM limit. This supersedes the older local
+  compilation prohibition below. Use `scripts/local-limited.sh` in WSL/Linux:
+  3 GiB hard process-tree memory limit, no swap, two CPU equivalents, 30-minute
+  timeout. Native checks: `bash scripts/local-limited.sh bash
+  scripts/check-android-local.sh` (JDK 17/SDK 36 required). Run heavy checks
+  serially. A Java heap limit alone is still not a total-memory cap. No device
+  installation or publication is implied.
 
-- Owner resource constraint (2026-10-27): no native compilation or APK builds.
-  Native Android development and improvements remain the primary requested work;
-  "build the app" means implement the app, not permission to invoke compilers.
-  Owner explicitly accepts that compilation/build-pass checks and device tests
-  remain unverified. Continue source edits and review without running those checks.
-  Do not run Gradle, Go builds/tests (tests compile), or
-  emulator/browser suites by default. Use the source-only check below. Native
-  build verification remains pending when native source changes. A JVM heap
-  setting alone does not cap total build memory or establish that a build is safe.
+- Owner authorized a GitHub prerelease on 2026-10-27. Hosted release workflows
+  remain available; publish only current checked assets when requested. Local
+  compilation/testing uses the capped workflow above, replacing the 2026-10-27
+  prohibition. Physical-device UI QA remains distinct from emulator/JVM checks.
 - Lightweight check: `node --max-old-space-size=128 scripts/check-light.mjs`.
   This validates shared templates/catalog and runs web domain tests serially,
   without dependencies, bundling or compilation. The heap limit is not an OS RAM cap.

@@ -1,5 +1,23 @@
 # Native QA handoff
 
+## Local development QA policy — 2026-10-29
+
+The owner now authorizes local builds and UI tests with a maximum RAM limit,
+superseding the historical hosted-only instructions below. Run Android checks
+through `scripts/local-limited.sh` and `scripts/check-android-local.sh`: a verified
+3 GiB process-tree cap, no swap, one Gradle worker, CPU quota 200% and a 30-minute
+timeout. Compiler/cache I/O uses Linux temporary storage; APK and JVM reports
+are copied back into `android/app/build/`. The native check refuses an uncapped
+invocation.
+
+`scripts/check_android_ui.py` targets only `emulator-5580` with AVD name
+`onepunch-qa`. It checks a new catalog exercise, logging, process recovery,
+font-scale changes and completion/history using disposable data, with screenshots
+and an APK hash report under `build/qa-android`. It does not target a phone.
+This development debug APK and emulator evidence do not replace signed-candidate
+physical-device QA or authorize publication. See `PRODUCT_QUALITY_BACKLOG.md` for
+the quality priorities and experimentation loop.
+
 ## 1.0 candidate additions (pending)
 
 - Use the exact candidate APK/hash from hosted artifacts; complete

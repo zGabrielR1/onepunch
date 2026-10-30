@@ -22,7 +22,7 @@ the client capability inventory and open release blockers. The source is now a
   including active inputs and routine drafts. Imports show a merge preview,
   preserve immutable history and keep an exportable pre-restore safety copy.
 
-- Shared library of 27 exercises and nine editable routine examples, each with
+- Shared library of 60 exercises and nine editable routine examples, each with
   seven exercises: Superior A/B, Inferior A/B, Empurrar, Puxar, Corpo inteiro A/B,
   and Com halteres. Exercise choices and initial set/rep/rest values are editable.
 - Modelos prontos in Treinos opens the full template library, including on an
@@ -99,8 +99,26 @@ No device installation or public deployment is performed automatically.
 
 ### Lightweight development on this PC
 
-The owner uses this PC while development runs. Routine work must avoid native
-compilation, especially APK generation. Start with this dependency-free check:
+Owner update (2026-10-29): local compilation and testing are authorized with a
+maximum RAM limit. In local WSL/Linux, with JDK 17 and Android SDK 36 installed:
+
+```sh
+sudo bash scripts/local-limited.sh bash scripts/check-android-local.sh
+```
+
+This verifies and enforces a **3 GiB total process-tree memory cap**, disables
+swap for the job, limits CPU use to two cores' equivalent and stops the job after
+30 minutes. Gradle runs one worker, with a 1280 MiB heap and in-process Kotlin
+compilation. The SDK defaults to `build/local-tools/sdk`; set `ANDROID_HOME` and
+`JAVA_HOME` in the invoked script when using another installation. These scripts
+need systemd/cgroup v2; they stop rather than silently run without the cap.
+Run heavy checks serially. Existing hosted release workflows remain available.
+Compiler snapshots and caches use disk-backed Linux `/var/tmp`, avoiding both
+slow Windows-mounted cache I/O and this machine's RAM-backed `/tmp`.
+No physical-device installation or publication is performed by these checks.
+
+The owner uses this PC while development runs. Start with the dependency-free
+check before running the capped compilation:
 
 ```sh
 node --max-old-space-size=128 scripts/check-light.mjs
@@ -111,12 +129,10 @@ It does not install packages, bundle assets, invoke Gradle/Go or open browsers.
 The 128 MiB setting limits each Node process's old-generation JavaScript heap;
 it is **not** a total RAM limit. `make check-light` runs the same checks.
 
-The commands below are manual build options, not routine checks. `make test`
-compiles Go tests; `make run` builds both web and API. Android JVM tests also
-require compilation. Do not run these or `make android` automatically on this PC.
-Gradle's heap setting does not bound Kotlin, native tools or total process memory,
-so lowering it alone is insufficient to make APK compilation safe. Existing
-artifacts remain available, but source-only checks do not refresh or verify them.
+The commands below are manual build options. `make test` compiles Go tests;
+`make run` builds both web and API. Run compilation inside the capped wrapper on
+this PC. Existing artifacts remain available, but source-only checks do not
+refresh or verify them.
 
 Requirements: Node 22+ and npm, Go (tested with 1.26), JDK 17, Android SDK platform
 36/build-tools 36.0.0. The Android Gradle wrapper is included; Android Studio can

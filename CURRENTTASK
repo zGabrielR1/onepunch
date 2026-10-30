@@ -1,5 +1,70 @@
 CURRENTTASK: Implementing the 1.0 release plan; 1.0.0-rc.1 source prepared.
 
+2026-10-30 verification pass: the two items left pending on 2026-10-29 (final
+browser rerun after the last CSS refinements, and native build/emulator evidence)
+are now closed on this working tree.
+- Web: production build and six domain tests passed; Go race tests passed.
+- Browser: rebuilt web client served by the real Go API on 127.0.0.1:8098 with
+disposable state files -> 116 workflow checks at 1440/1024/768/390/320 plus 52
+catalog/layout checks at 1440/768/390/320 = 168 total, all passing. Each suite uses
+its own fresh state file; sharing one file made the history count assertion fail
+because earlier suites leave synced workouts.
+- Native, capped workflow (3 GiB, no swap, 200% CPU, 30 min): assembleDebug and
+71 JVM tests passed, zero failures/errors/skips. Debug APK 18,430,663 bytes,
+SHA-256 e7c52e739e85a14b42c6980a74886df3ad52848f6702f9e5ad3c1b5cc85c05c3.
+- Native emulator QA: disposable AVD onepunch-qa (Android 15, 720x1280 @320dpi)
+passed nine checks: accent-insensitive search, equipment filter with 60-exercise
+count, completed set and 12.5 kg load persisted, survival across process restart
+and a 1.3 font-scale change, no premature history, exactly one completed set in
+history, new catalog ID retained. Evidence: build/qa-android/report.json plus
+screenshots; reviewed session-large-font and library-filtered, no clipping.
+- Harness fixes in scripts/check_android_ui.py were needed for these to run: the
+resume card must be tapped from the dump that found it (its rest-timer prefix
+changes), and the post-restart set row must be scrolled into view.
+- Emulator stopped afterwards and no onepunch systemd units remain active. No
+publication, no physical-device install; android/gradlew mode untouched.
+- Tooling rebuilt after the old build/ cache was removed: Android SDK at
+/var/tmp/onepunch-android-sdk (platform 36, build-tools 36.0.0; the emulator SDK
+is /var/tmp/onepunch-emulator-sdk), Playwright in /var/tmp/onepunch-qa-tools,
+scratch runners and logs in build/qa and /var/tmp/onepunch-qa-run.
+- Remaining blockers are unchanged: P0 exact-artifact QA of the signed RC on a
+real phone, independent owner signing-key backup, then authorized stable promotion.
+
+STOPPED at owner's explicit request: "STOP IT WE ARE GOING TO BUILD LATER".
+Do not resume builds, emulator or test jobs until requested. Confirmed zero
+onepunch-local systemd units running after stopping. Source changes preserved.
+Local APK compilation and 71 JVM tests passed; verified artifact/report:
+android/app/build/outputs/apk/debug/app-debug.apk and build/android-local-result.json.
+168 browser checks and Go race tests passed before two final CSS refinements;
+those final CSS changes still need a rerun. Emulator UI QA remains unfinished.
+Linux /tmp is RAM-backed: future capped builds use disk-backed /var/tmp.
+
+2026-10-29 active request: owner explicitly authorizes LOCAL compilation and
+testing with a maximum RAM limit, superseding the old no-local-build policy.
+Implemented a verified 3 GiB cgroup process-tree cap, no swap, CPU quota 200%,
+one Gradle worker and 30-minute timeout. Scripts: local-limited.sh and
+check-android-local.sh. A first native build was interrupted by a session restart;
+cached dependencies survived. Capped checks are being resumed with compiler
+cache/source snapshots on disk-backed Linux /var/tmp to avoid slow Windows-
+mounted cache I/O. /tmp is RAM-backed here and must not hold build/emulator data.
+
+Current changes: catalog 27 -> 60 (original IDs/templates preserved), shared
+search semantics and equipment filters in both clients, native picker empty
+feedback/counts, readable active-set fields/previous values, responsive hero
+and web typography/contrast/touch targets. New browser tests caught and prompted
+a fix for the equipment select's accessible label. Baseline 116 browser checks,
+six domain tests and local Go race tests passed. Web inspector improved from
+6 FAIL to 0 FAIL; final rerun and native build/emulator evidence remain pending.
+Temporary orchestration/logs: build/resume-qa.sh, build/qa-before, build/qa-after.
+Do not publish or install on physical devices. Preserve android/gradlew mode.
+
+2026-10-29 owner feedback: prioritize broader exercise coverage, visual bug
+reproduction and design refinement through actual use. Source review and ordered
+acceptance criteria: docs/PRODUCT_QUALITY_BACKLOG.md. Confirmed 27 exercises,
+tiny active-set labels/fixed previous-value column and picker feedback gaps.
+No product source changes or new runtime/build/device verification this pass.
+Signed-candidate and real-device release gates below remain in effect.
+
 Latest: owner authorized a new permanent release key. Created restricted ignored
 recovery directory build/signing-recovery and configured five GitHub secrets.
 Signed candidate run 40607494288 for 3a7c705 passed: release APK, 70 JVM tests,

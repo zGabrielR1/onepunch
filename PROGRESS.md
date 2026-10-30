@@ -1,5 +1,44 @@
 # Progress
 
+## 2026-10-30 — pending verification finished locally
+
+- Closed the two items left open on 2026-10-29: the browser rerun after the final
+  CSS refinements, and native build/emulator evidence. Source unchanged except a
+  test-harness fix in `scripts/check_android_ui.py` (described below).
+- Web build and six domain tests passed; `go test -race ./...` passed. Rebuilt Go
+  API served the rebuilt web client on 127.0.0.1:8098.
+- 168 browser checks passed: 116 workflow checks at 1440/1024/768/390/320 and 52
+  catalog/layout checks at 1440/768/390/320. The two suites need separate fresh
+  API state files; a shared file carries synced workouts into the next suite and
+  fails its single-workout history assertion.
+- Capped local native build passed (3 GiB process-tree cap, no swap, 200% CPU,
+  one worker, 30-minute limit): `assembleDebug` plus 71 JVM tests with zero
+  failures/errors/skips. Debug APK 18,430,663 bytes, SHA-256
+  e7c52e739e85a14b42c6980a74886df3ad52848f6702f9e5ad3c1b5cc85c05c3.
+- Disposable emulator AVD `onepunch-qa` (Android 15, 720x1280 @320dpi) passed nine
+  checks: accent-insensitive multiword search found the new machine press,
+  equipment filter reported 1 of 60, entered 12.5 kg persisted exactly, the set and
+  active workout survived a process restart and a 1.3 font-scale change, no history
+  existed before finishing, exactly one completed set entered history and kept the
+  new catalog ID. Report and screenshots in `build/qa-android/`; the large-font and
+  filtered-library screenshots were reviewed and show no clipping.
+- Harness fixes needed to reach those checks: tap the resume card using the bounds
+  from the dump that found it (a running rest timer prefixes its label), and scroll
+  the restored set row into view. Product assertions were not weakened.
+- Emulator stopped and no onepunch systemd units remain active. No publication and
+  no physical-device installation. Real-device QA of the signed RC, independent
+  signing-key backup and stable promotion are still pending.
+
+## 2026-10-29 — product quality priorities
+
+- Recorded owner feedback and source-grounded improvement backlog in
+  docs/PRODUCT_QUALITY_BACKLOG.md: exercise coverage, active-set readability,
+  picker filtering/empty feedback and consistent visual hierarchy.
+- Distinguished confirmed source concerns from unverified device layout bugs.
+  Recorded exact-candidate experimentation loop and acceptance evidence.
+- Documentation-only pass; no runtime code, catalog or personal data changed.
+  No compilation, browser suite, installation or publication performed.
+
 ## 2026-10-27 — signed 1.0 RC verified
 
 - Owner requested continuing the 1.0 plan and explicitly chose creation of a new

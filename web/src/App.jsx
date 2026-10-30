@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   ArrowUpRight,
   ArrowRight,
@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import catalog from "../../shared/catalog.json";
 import seeds from "../../shared/routines.json";
+import { filterExercises } from "./lib/catalog.mjs";
 import {
   STORAGE_KEY,
   id,
@@ -153,16 +154,33 @@ function Modal({ title, onClose, children, wide = false }) {
     </dialog>
   );
 }
+function EquipmentFilter({ value, onChange }) {
+  const selectId = useId();
+  return (
+    <div className="equipment-filter">
+      <label htmlFor={selectId}>Equipamento</label>
+      <select
+        id={selectId}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        <option value="Todos">Todos os equipamentos</option>
+        {[...new Set(catalog.map((exercise) => exercise.equipment))]
+          .sort()
+          .map((equipment) => (
+            <option key={equipment} value={equipment}>
+              {equipment}
+            </option>
+          ))}
+      </select>
+    </div>
+  );
+}
 function ExercisePicker({ onSelect, onClose, existing = [] }) {
   const [search, setSearch] = useState("");
   const [group, setGroup] = useState("Todos");
-  const shown = catalog.filter(
-    (e) =>
-      (group === "Todos" || e.muscle === group) &&
-      normalize(`${e.name} ${e.muscle} ${e.equipment}`).includes(
-        normalize(search),
-      ),
-  );
+  const [equipment, setEquipment] = useState("Todos");
+  const shown = filterExercises(catalog, search, group, equipment);
   return (
     <Modal title="Adicionar exercício" onClose={onClose}>
       <label className="search-field">
@@ -187,6 +205,24 @@ function ExercisePicker({ onSelect, onClose, existing = [] }) {
           </button>
         ))}
       </div>
+      <EquipmentFilter value={equipment} onChange={setEquipment} />
+      <div className="filter-summary">
+        <span role="status">
+          {shown.length} de {catalog.length} exercícios
+        </span>
+        {search || group !== "Todos" || equipment !== "Todos" ? (
+          <button
+            className="text-button"
+            onClick={() => {
+              setSearch("");
+              setGroup("Todos");
+              setEquipment("Todos");
+            }}
+          >
+            Limpar filtros
+          </button>
+        ) : null}
+      </div>
       <div className="picker-list">
         {shown.map((e) => (
           <button
@@ -200,6 +236,7 @@ function ExercisePicker({ onSelect, onClose, existing = [] }) {
               <strong>{e.name}</strong>
               <small>
                 {e.muscle} · {e.equipment}
+                {existing.includes(e.id) ? " · Já adicionado" : ""}
               </small>
             </span>
             {existing.includes(e.id) ? <Check size={18} /> : <Plus size={18} />}
@@ -499,6 +536,8 @@ function App() {
   const [storageError, setStorageError] = useState("");
   const [search, setSearch] = useState("");
   const [group, setGroup] = useState("Todos");
+  const [equipment, setEquipment] = useState("Todos");
+  const libraryExercises = filterExercises(catalog, search, group, equipment);
   const [now, setNow] = useState(Date.now());
   const [syncing, setSyncing] = useState(false);
   const [progressExercise, setProgressExercise] = useState("");
@@ -631,7 +670,7 @@ function App() {
           {brand.name}
           <span className="brand-dot">.</span>
         </a>
-        <span className="sidebar-label">SEU ESPAÇO DE TREINO</span>
+        <span className="sidebar-label">Seu espaço de treino</span>
         <nav aria-label="Navegação principal">
           {nav.map(([key, label, Icon]) => (
             <button
@@ -729,13 +768,9 @@ function App() {
               <section className="dashboard-top">
                 <div className="hero">
                   <div className="hero-copy">
-                    <span className="hero-kicker">
-                      <span />
-                      UM TREINO DE CADA VEZ
-                    </span>
                     <h2>
-                      FORÇA É<br />
-                      CONSTÂNCIA<span>↗</span>
+                      Força é<br />
+                      constância.
                     </h2>
                     <p>
                       Um lugar para planejar, registrar
@@ -759,11 +794,6 @@ function App() {
                       <strong />
                       <span />
                     </div>
-                    <span className="hero-art-label">
-                      SUA FORÇA.
-                      <br />
-                      SEU CAMINHO.
-                    </span>
                   </div>
                 </div>
                 <div className="week-card">
@@ -836,7 +866,6 @@ function App() {
               <section className="routines-section">
                 <div className="section-heading">
                   <div>
-                    <p className="eyebrow">PLANEJAMENTO</p>
                     <h2>Seus próximos treinos</h2>
                   </div>
                   <button
@@ -967,7 +996,6 @@ function App() {
             <>
               <div className="page-heading">
                 <div>
-                  <p className="eyebrow">DO PLANO À PRÁTICA</p>
                   <h1>
                     Meus treinos<span>.</span>
                   </h1>
@@ -988,7 +1016,9 @@ function App() {
                   className="create-routine-card"
                   onClick={() => setModal({ type: "templates" })}
                 >
-                  <span><BookOpen size={26} /></span>
+                  <span>
+                    <BookOpen size={26} />
+                  </span>
                   <strong>Modelos prontos ({seeds.length})</strong>
                   <p>Explore os exercícios e edite uma nova cópia.</p>
                 </button>
@@ -1016,7 +1046,8 @@ function App() {
                 <BookOpen size={18} />
                 <p>
                   As rotinas iniciais são modelos editáveis, não um plano
-                  personalizado. Escolha e ajuste os exercícios; não é necessário realizar todos.
+                  personalizado. Escolha e ajuste os exercícios; não é
+                  necessário realizar todos.
                 </p>
               </div>
             </>
@@ -1025,7 +1056,6 @@ function App() {
             <>
               <div className="page-heading">
                 <div>
-                  <p className="eyebrow">SEU REPERTÓRIO</p>
                   <h1>
                     Biblioteca de exercícios<span>.</span>
                   </h1>
@@ -1040,7 +1070,7 @@ function App() {
                   <Search size={18} />
                   <input
                     aria-label="Buscar na biblioteca"
-                    placeholder="Buscar por nome ou equipamento"
+                    placeholder="Nome, músculo ou equipamento"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
@@ -1058,40 +1088,42 @@ function App() {
                   ))}
                 </div>
               </div>
-              <div className="exercise-grid">
-                {catalog
-                  .filter(
-                    (e) =>
-                      (group === "Todos" || e.muscle === group) &&
-                      normalize(`${e.name} ${e.equipment}`).includes(
-                        normalize(search),
-                      ),
-                  )
-                  .map((e) => (
-                    <button
-                      className="exercise-card"
-                      key={e.id}
-                      onClick={() =>
-                        setModal({ type: "exercise", exercise: e })
-                      }
-                    >
-                      <Glyph muscle={e.muscle} size={86} />
-                      <div>
-                        <span className="muscle-label">{e.muscle}</span>
-                        <h2>{e.name}</h2>
-                        <p>{e.equipment}</p>
-                      </div>
-                      <ArrowUpRight size={18} />
-                    </button>
-                  ))}
+              <EquipmentFilter value={equipment} onChange={setEquipment} />
+              <div className="filter-summary">
+                <span role="status">
+                  {libraryExercises.length} de {catalog.length} exercícios
+                </span>
+                {search || group !== "Todos" || equipment !== "Todos" ? (
+                  <button
+                    className="text-button"
+                    onClick={() => {
+                      setSearch("");
+                      setGroup("Todos");
+                      setEquipment("Todos");
+                    }}
+                  >
+                    Limpar filtros
+                  </button>
+                ) : null}
               </div>
-              {!catalog.some(
-                (e) =>
-                  (group === "Todos" || e.muscle === group) &&
-                  normalize(`${e.name} ${e.equipment}`).includes(
-                    normalize(search),
-                  ),
-              ) ? (
+              <div className="exercise-grid">
+                {libraryExercises.map((e) => (
+                  <button
+                    className="exercise-card"
+                    key={e.id}
+                    onClick={() => setModal({ type: "exercise", exercise: e })}
+                  >
+                    <Glyph muscle={e.muscle} size={86} />
+                    <div>
+                      <span className="muscle-label">{e.muscle}</span>
+                      <h2>{e.name}</h2>
+                      <p>{e.equipment}</p>
+                    </div>
+                    <ArrowUpRight size={18} />
+                  </button>
+                ))}
+              </div>
+              {!libraryExercises.length ? (
                 <div className="empty-state">
                   <Search />
                   <h2>Nenhum exercício por aqui.</h2>
@@ -1101,6 +1133,7 @@ function App() {
                     onClick={() => {
                       setGroup("Todos");
                       setSearch("");
+                      setEquipment("Todos");
                     }}
                   >
                     Limpar busca
@@ -1113,7 +1146,6 @@ function App() {
             <>
               <div className="page-heading">
                 <div>
-                  <p className="eyebrow">CONSTRUÍDO POR VOCÊ</p>
                   <h1>
                     Cada treino conta<span>.</span>
                   </h1>
@@ -1148,7 +1180,6 @@ function App() {
                   </div>
                   <section className="progress-card">
                     <div>
-                      <p className="eyebrow">PROGRESSO POR EXERCÍCIO</p>
                       <h2>Seu melhor registro</h2>
                     </div>
                     <label className="sr-only" htmlFor="progress-exercise">
@@ -1229,7 +1260,7 @@ function App() {
               ) : (
                 <div className="empty-state history-empty-large">
                   <CalendarDays size={42} />
-                  <p className="eyebrow">PÁGINA UM</p>
+
                   <h2>
                     Seu primeiro registro
                     <br />
@@ -1261,7 +1292,6 @@ function App() {
               </div>
               <div className="page-heading">
                 <div>
-                  <p className="eyebrow">AGORA É COM VOCÊ</p>
                   <h1>
                     {active.title}
                     <span>.</span>
@@ -1562,22 +1592,32 @@ function App() {
           </p>
           {seeds.map((template) => (
             <details className="routine-template" key={template.id}>
-              <summary>{template.name} · {template.exercises.length} exercícios</summary>
+              <summary>
+                {template.name} · {template.exercises.length} exercícios
+              </summary>
               <p className="modal-description">{template.note}</p>
               <ul>
                 {template.exercises.map((spec) => (
                   <li key={spec.exerciseId}>
                     {exerciseById[spec.exerciseId]?.name || spec.exerciseId}
-                    {" — "}{spec.sets} × {spec.reps} · descanso {spec.restSeconds}s
+                    {" — "}
+                    {spec.sets} × {spec.reps} · descanso {spec.restSeconds}s
                   </li>
                 ))}
               </ul>
               <button
                 className="button dark full"
-                onClick={() => setModal({
-                  type: "routine",
-                  routine: { ...structuredClone(template), id: id(), archived: false, updatedAt: Date.now() },
-                })}
+                onClick={() =>
+                  setModal({
+                    type: "routine",
+                    routine: {
+                      ...structuredClone(template),
+                      id: id(),
+                      archived: false,
+                      updatedAt: Date.now(),
+                    },
+                  })
+                }
               >
                 Usar modelo <Plus size={18} />
               </button>

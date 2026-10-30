@@ -187,5 +187,236 @@
     "muscle": "Pernas",
     "equipment": "Halteres",
     "description": "Variação de levantamento romeno usando halteres. Registre a soma das cargas utilizadas."
+  },
+  {
+    "id": "dumbbell-bench-press",
+    "name": "Supino reto com halteres",
+    "muscle": "Peito",
+    "equipment": "Halteres",
+    "description": "Registre a soma das cargas dos dois halteres."
+  },
+  {
+    "id": "incline-barbell-press",
+    "name": "Supino inclinado com barra",
+    "muscle": "Peito",
+    "equipment": "Barra",
+    "description": "Registre a carga total, incluindo a barra."
+  },
+  {
+    "id": "machine-chest-press",
+    "name": "Supino na máquina",
+    "muscle": "Peito",
+    "equipment": "Máquina",
+    "description": "Registre a carga indicada na máquina utilizada."
+  },
+  {
+    "id": "pec-deck",
+    "name": "Crucifixo na máquina",
+    "muscle": "Peito",
+    "equipment": "Máquina",
+    "description": "Registre a carga indicada na máquina utilizada."
+  },
+  {
+    "id": "dumbbell-fly",
+    "name": "Crucifixo com halteres",
+    "muscle": "Peito",
+    "equipment": "Halteres",
+    "description": "Registre a soma das cargas dos dois halteres."
+  },
+  {
+    "id": "incline-push-up",
+    "name": "Flexão inclinada",
+    "muscle": "Peito",
+    "equipment": "Peso corporal",
+    "description": "Flexão com as mãos em um apoio elevado. Registre zero kg quando não houver carga adicional."
+  },
+  {
+    "id": "pull-up",
+    "name": "Barra fixa pronada",
+    "muscle": "Costas",
+    "equipment": "Peso corporal",
+    "description": "Registre somente a carga adicional; sem carga adicional, use zero kg."
+  },
+  {
+    "id": "chin-up",
+    "name": "Barra fixa supinada",
+    "muscle": "Costas",
+    "equipment": "Peso corporal",
+    "description": "Registre somente a carga adicional; sem carga adicional, use zero kg."
+  },
+  {
+    "id": "barbell-row",
+    "name": "Remada curvada com barra",
+    "muscle": "Costas",
+    "equipment": "Barra",
+    "description": "Registre a carga total, incluindo a barra."
+  },
+  {
+    "id": "chest-supported-row",
+    "name": "Remada com apoio no peito",
+    "muscle": "Costas",
+    "equipment": "Halteres",
+    "description": "Remada com o peito apoiado no banco. Registre a soma das cargas dos dois halteres."
+  },
+  {
+    "id": "machine-row",
+    "name": "Remada na máquina",
+    "muscle": "Costas",
+    "equipment": "Máquina",
+    "description": "Registre a carga indicada na máquina utilizada."
+  },
+  {
+    "id": "straight-arm-pulldown",
+    "name": "Pulldown com braços estendidos",
+    "muscle": "Costas",
+    "equipment": "Polia",
+    "description": "Registre a carga indicada na polia utilizada."
+  },
+  {
+    "id": "deadlift",
+    "name": "Levantamento terra",
+    "muscle": "Pernas",
+    "equipment": "Barra",
+    "description": "Registre a carga total, incluindo a barra."
+  },
+  {
+    "id": "front-squat",
+    "name": "Agachamento frontal",
+    "muscle": "Pernas",
+    "equipment": "Barra",
+    "description": "Variação com a barra à frente dos ombros. Registre a carga total, incluindo a barra."
+  },
+  {
+    "id": "bulgarian-split-squat",
+    "name": "Agachamento búlgaro",
+    "muscle": "Pernas",
+    "equipment": "Halteres",
+    "description": "Registre as repetições por lado e a soma das cargas dos halteres."
+  },
+  {
+    "id": "dumbbell-step-up",
+    "name": "Subida no banco com halteres",
+    "muscle": "Pernas",
+    "equipment": "Halteres",
+    "description": "Registre as repetições por lado e a soma das cargas dos halteres."
+  },
+  {
+    "id": "seated-leg-curl",
+    "name": "Cadeira flexora",
+    "muscle": "Pernas",
+    "equipment": "Máquina",
+    "description": "Flexão dos joelhos sentado. Registre a carga indicada na máquina utilizada."
+  },
+  {
+    "id": "hip-abduction",
+    "name": "Cadeira abdutora",
+    "muscle": "Pernas",
+    "equipment": "Máquina",
+    "description": "Registre a carga indicada na máquina utilizada."
+  },
+  {
+    "id": "hip-adduction",
+    "name": "Cadeira adutora",
+    "muscle": "Pernas",
+    "equipment": "Máquina",
+    "description": "Registre a carga indicada na máquina utilizada."
+  },
+  {
+    "id": "seated-calf-raise",
+    "name": "Panturrilha sentado",
+    "muscle": "Pernas",
+    "equipment": "Máquina",
+    "description": "Registre a carga utilizada na máquina, mantendo a mesma convenção entre sessões."
+  },
+  {
+    "id": "bodyweight-squat",
+    "name": "Agachamento sem carga",
+    "muscle": "Pernas",
+    "equipment": "Peso corporal",
+    "description": "Registre zero kg para o movimento sem carga adicional."
+  },
+  {
+    "id": "barbell-overhead-press",
+    "name": "Desenvolvimento com barra",
+    "muscle": "Ombros",
+    "equipment": "Barra",
+    "description": "Registre a carga total, incluindo a barra."
+  },
+  {
+    "id": "machine-shoulder-press",
+    "name": "Desenvolvimento na máquina",
+    "muscle": "Ombros",
+    "equipment": "Máquina",
+    "description": "Registre a carga indicada na máquina utilizada."
+  },
+  {
+    "id": "cable-lateral-raise",
+    "name": "Elevação lateral na polia",
+    "muscle": "Ombros",
+    "equipment": "Polia",
+    "description": "Registre as repetições por lado e a carga indicada na polia utilizada."
+  },
+  {
+    "id": "reverse-pec-deck",
+    "name": "Crucifixo inverso na máquina",
+    "muscle": "Ombros",
+    "equipment": "Máquina",
+    "description": "Registre a carga indicada na máquina utilizada."
+  },
+  {
+    "id": "dumbbell-curl",
+    "name": "Rosca com halteres",
+    "muscle": "Braços",
+    "equipment": "Halteres",
+    "description": "Registre as repetições por braço e a soma das cargas dos halteres."
+  },
+  {
+    "id": "preacher-curl",
+    "name": "Rosca Scott",
+    "muscle": "Braços",
+    "equipment": "Barra",
+    "description": "Registre a carga total, incluindo a barra."
+  },
+  {
+    "id": "cable-curl",
+    "name": "Rosca na polia",
+    "muscle": "Braços",
+    "equipment": "Polia",
+    "description": "Registre a carga indicada na polia utilizada."
+  },
+  {
+    "id": "lying-triceps-extension",
+    "name": "Tríceps testa",
+    "muscle": "Braços",
+    "equipment": "Barra",
+    "description": "Registre a carga total, incluindo a barra."
+  },
+  {
+    "id": "single-arm-triceps-pushdown",
+    "name": "Tríceps unilateral na polia",
+    "muscle": "Braços",
+    "equipment": "Polia",
+    "description": "Registre as repetições por lado e a carga indicada na polia utilizada."
+  },
+  {
+    "id": "cable-crunch",
+    "name": "Abdominal na polia",
+    "muscle": "Core",
+    "equipment": "Polia",
+    "description": "Registre a carga indicada na polia utilizada e as repetições completas."
+  },
+  {
+    "id": "lying-leg-raise",
+    "name": "Elevação de pernas deitado",
+    "muscle": "Core",
+    "equipment": "Peso corporal",
+    "description": "Registre zero kg quando não houver carga adicional."
+  },
+  {
+    "id": "hanging-knee-raise",
+    "name": "Elevação de joelhos suspenso",
+    "muscle": "Core",
+    "equipment": "Peso corporal",
+    "description": "Registre zero kg quando não houver carga adicional."
   }
 ]

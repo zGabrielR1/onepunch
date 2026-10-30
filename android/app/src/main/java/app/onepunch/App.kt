@@ -1079,26 +1079,20 @@ fun OnepunchApp() {
                                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                                         ) {
                                             Text(
-                                                "SÉRIE",
-                                                fontSize = 8.sp,
+                                                "#",
+                                                fontSize = 12.sp,
                                                 color = Muted,
                                                 modifier = Modifier.width(28.dp),
                                             )
                                             Text(
-                                                "ANTERIOR",
-                                                fontSize = 8.sp,
-                                                color = Muted,
-                                                modifier = Modifier.width(49.dp),
-                                            )
-                                            Text(
                                                 "KG",
-                                                fontSize = 9.sp,
+                                                fontSize = 12.sp,
                                                 color = Muted,
                                                 modifier = Modifier.weight(1f),
                                             )
                                             Text(
                                                 "REPS",
-                                                fontSize = 9.sp,
+                                                fontSize = 12.sp,
                                                 color = Muted,
                                                 modifier = Modifier.weight(1f),
                                             )
@@ -1107,114 +1101,115 @@ fun OnepunchApp() {
                                         active.sets
                                             .filter { it.exerciseId == e.id }
                                             .forEachIndexed { index, set ->
-                                                Row(
-                                                    Modifier.fillMaxWidth(),
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement =
-                                                        Arrangement.spacedBy(6.dp),
-                                                ) {
-                                                    Text(
-                                                        (index + 1).toString(),
-                                                        fontSize = 12.sp,
-                                                        color = Muted,
-                                                        modifier = Modifier.width(28.dp),
-                                                    )
-                                                    Text(
-                                                        previous.getOrNull(index)?.let {
-                                                            "${it.weight} × ${it.reps}"
-                                                        } ?: "—",
-                                                        fontSize = 10.sp,
-                                                        color = Muted,
-                                                        modifier = Modifier.width(49.dp),
-                                                    )
-                                                    OutlinedTextField(
-                                                        value = set.weight,
-                                                        onValueChange = { text ->
-                                                            updateActive { a ->
-                                                                a.copy(
-                                                                    sets =
-                                                                        a.sets.map {
-                                                                            if (it.id == set.id)
-                                                                                it.copy(
-                                                                                    weight = text,
-                                                                                    done = false,
-                                                                                )
-                                                                            else it
-                                                                        },
-                                                                )
-                                                            }
-                                                        },
-                                                        singleLine = true,
-                                                        modifier =
-                                                            Modifier.weight(1f).semantics {
-                                                                contentDescription =
-                                                                    "Carga, série ${index + 1}, ${e.name}"
-                                                            },
-                                                        keyboardOptions =
-                                                            KeyboardOptions(
-                                                                keyboardType = KeyboardType.Decimal,
-                                                            ),
-                                                        textStyle =
-                                                            LocalTextStyle.current.copy(
-                                                                fontSize = 13.sp,
-                                                            ),
-                                                        shape = RoundedCornerShape(8.dp),
-                                                        colors =
-                                                            OutlinedTextFieldDefaults.colors(
-                                                                focusedContainerColor =
-                                                                    if (set.done) Color(0xFFEDF4DE)
-                                                                    else Paper,
-                                                                unfocusedContainerColor =
-                                                                    if (set.done) Color(0xFFEDF4DE)
-                                                                    else Paper,
-                                                            ),
-                                                    )
-                                                    OutlinedTextField(
-                                                        value = set.reps,
-                                                        onValueChange = { text ->
-                                                            updateActive { a ->
-                                                                a.copy(
-                                                                    sets =
-                                                                        a.sets.map {
-                                                                            if (it.id == set.id)
-                                                                                it.copy(
-                                                                                    reps = text,
-                                                                                    done = false,
-                                                                                )
-                                                                            else it
-                                                                        },
-                                                                )
-                                                            }
-                                                        },
-                                                        singleLine = true,
-                                                        modifier =
-                                                            Modifier.weight(1f).semantics {
-                                                                contentDescription =
-                                                                    "Repetições, série ${index + 1}, ${e.name}"
-                                                            },
-                                                        keyboardOptions =
-                                                            KeyboardOptions(
-                                                                keyboardType = KeyboardType.Number,
-                                                            ),
-                                                        textStyle =
-                                                            LocalTextStyle.current.copy(
-                                                                fontSize = 13.sp,
-                                                            ),
-                                                        shape = RoundedCornerShape(8.dp),
-                                                    )
-                                                    FilledIconToggleButton(
-                                                        checked = set.done,
-                                                        onCheckedChange = {
-                                                            updateActive { toggleSet(it, set.id) }
-                                                        },
-                                                        enabled = set.done || validSet(set),
-                                                        modifier = Modifier.size(44.dp),
-                                                    ) {
-                                                        Icon(
-                                                            Icons.Outlined.Check,
-                                                            "${if (set.done) "Desmarcar" else "Concluir"} série ${index + 1}",
-                                                            Modifier.size(18.dp),
+                                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                    previous.getOrNull(index)?.let { last ->
+                                                        Text(
+                                                            "Série ${index + 1} · anterior: ${last.weight} kg × ${last.reps}",
+                                                            fontSize = 12.sp,
+                                                            color = Muted,
                                                         )
+                                                    }
+                                                    Row(
+                                                        Modifier.fillMaxWidth(),
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement =
+                                                            Arrangement.spacedBy(6.dp),
+                                                    ) {
+                                                        Text(
+                                                            (index + 1).toString(),
+                                                            fontSize = 12.sp,
+                                                            color = Muted,
+                                                            modifier = Modifier.width(28.dp),
+                                                        )
+                                                        OutlinedTextField(
+                                                            value = set.weight,
+                                                            onValueChange = { text ->
+                                                                updateActive { a ->
+                                                                    a.copy(
+                                                                        sets =
+                                                                            a.sets.map {
+                                                                                if (it.id == set.id)
+                                                                                    it.copy(
+                                                                                        weight = text,
+                                                                                        done = false,
+                                                                                    )
+                                                                                else it
+                                                                            },
+                                                                    )
+                                                                }
+                                                            },
+                                                            singleLine = true,
+                                                            modifier =
+                                                                Modifier.weight(1f).semantics {
+                                                                    contentDescription =
+                                                                        "Carga, série ${index + 1}, ${e.name}"
+                                                                },
+                                                            keyboardOptions =
+                                                                KeyboardOptions(
+                                                                    keyboardType = KeyboardType.Decimal,
+                                                                ),
+                                                            textStyle =
+                                                                LocalTextStyle.current.copy(
+                                                                    fontSize = 16.sp,
+                                                                ),
+                                                            shape = RoundedCornerShape(8.dp),
+                                                            colors =
+                                                                OutlinedTextFieldDefaults.colors(
+                                                                    focusedContainerColor =
+                                                                        if (set.done) Color(0xFFEDF4DE)
+                                                                        else Paper,
+                                                                    unfocusedContainerColor =
+                                                                        if (set.done) Color(0xFFEDF4DE)
+                                                                        else Paper,
+                                                                ),
+                                                        )
+                                                        OutlinedTextField(
+                                                            value = set.reps,
+                                                            onValueChange = { text ->
+                                                                updateActive { a ->
+                                                                    a.copy(
+                                                                        sets =
+                                                                            a.sets.map {
+                                                                                if (it.id == set.id)
+                                                                                    it.copy(
+                                                                                        reps = text,
+                                                                                        done = false,
+                                                                                    )
+                                                                                else it
+                                                                            },
+                                                                    )
+                                                                }
+                                                            },
+                                                            singleLine = true,
+                                                            modifier =
+                                                                Modifier.weight(1f).semantics {
+                                                                    contentDescription =
+                                                                        "Repetições, série ${index + 1}, ${e.name}"
+                                                                },
+                                                            keyboardOptions =
+                                                                KeyboardOptions(
+                                                                    keyboardType = KeyboardType.Number,
+                                                                ),
+                                                            textStyle =
+                                                                LocalTextStyle.current.copy(
+                                                                    fontSize = 16.sp,
+                                                                ),
+                                                            shape = RoundedCornerShape(8.dp),
+                                                        )
+                                                        FilledIconToggleButton(
+                                                            checked = set.done,
+                                                            onCheckedChange = {
+                                                                updateActive { toggleSet(it, set.id) }
+                                                            },
+                                                            enabled = set.done || validSet(set),
+                                                            modifier = Modifier.size(44.dp),
+                                                        ) {
+                                                            Icon(
+                                                                Icons.Outlined.Check,
+                                                                "${if (set.done) "Desmarcar" else "Concluir"} série ${index + 1} de ${e.name}",
+                                                                Modifier.size(18.dp),
+                                                            )
+                                                        }
                                                     }
                                                 }
                                             }
@@ -2070,26 +2065,20 @@ private fun ExerciseDetails(
 @Composable
 private fun Hero(onClick: () -> Unit) {
     Surface(color = Lime, shape = RoundedCornerShape(13.dp)) {
-        Box(Modifier.fillMaxWidth().height(283.dp)) {
-            Column(Modifier.padding(25.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Box(Modifier.fillMaxWidth().heightIn(min = 283.dp)) {
+            Column(Modifier.padding(start = 25.dp, top = 25.dp, end = 25.dp, bottom = 88.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text(
-                    "UM TREINO DE CADA VEZ",
-                    fontSize = 9.sp,
-                    letterSpacing = 1.4.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    "FORÇA É\nCONSTÂNCIA",
-                    fontSize = 42.sp,
-                    lineHeight = 40.sp,
-                    letterSpacing = (-2).sp,
+                    "Força é\nconstância.",
+                    fontSize = 32.sp,
+                    lineHeight = 36.sp,
+                    letterSpacing = (-1).sp,
                     fontWeight = FontWeight.Black,
                 )
                 Text(
-                    "Um lugar para planejar, registrar\ne enxergar sua evolução.",
-                    fontSize = 11.sp,
-                    lineHeight = 17.sp,
-                    color = Color(0xFF657644),
+                    "Um lugar para planejar, registrar e enxergar sua evolução.",
+                    fontSize = 14.sp,
+                    lineHeight = 21.sp,
+                    color = Color(0xFF3E512B),
                 )
                 Button(
                     onClick,
@@ -2100,12 +2089,12 @@ private fun Hero(onClick: () -> Unit) {
                             contentColor = Ink,
                         ),
                 ) {
-                    Text("Escolher meu treino", fontSize = 11.sp)
+                    Text("Escolher meu treino", fontSize = 14.sp)
                     Spacer(Modifier.width(10.dp))
                     Icon(Icons.AutoMirrored.Outlined.ArrowForward, null, Modifier.size(16.dp))
                 }
             }
-            Canvas(Modifier.size(105.dp).align(Alignment.BottomEnd).offset(32.dp, 5.dp)) {
+            Canvas(Modifier.padding(16.dp).size(56.dp).align(Alignment.BottomEnd)) {
                 rotate(-30f) {
                     val color = Color(0xFF2B442A)
                     drawRoundRect(
@@ -2253,10 +2242,8 @@ private fun HistoryRow(workout: Workout, onClick: () -> Unit) {
 private fun Library(catalog: List<Exercise>, active: Boolean, onSelect: (Exercise) -> Unit) {
     var query by remember { mutableStateOf("") }
     var muscle by remember { mutableStateOf("Todos") }
-    val matches = catalog.filter {
-        (muscle == "Todos" || it.muscle == muscle) &&
-            normalized("${it.name} ${it.equipment}").contains(normalized(query))
-    }
+    var equipment by remember { mutableStateOf("Todos") }
+    val matches = filterExercises(catalog, query, muscle, equipment)
     LazyColumn(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(22.dp, 16.dp, 22.dp, if (active) 100.dp else 25.dp),
@@ -2269,21 +2256,46 @@ private fun Library(catalog: List<Exercise>, active: Boolean, onSelect: (Exercis
                 onValueChange = { query = it },
                 leadingIcon = { Icon(Icons.Outlined.Search, null) },
                 placeholder = { Text("Buscar exercício", fontSize = 13.sp) },
+                label = { Text("Nome, músculo ou equipamento") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(9.dp),
             )
         }
         item { MuscleChips(muscle) { muscle = it } }
+        item { EquipmentFilter(catalog, equipment) { equipment = it } }
+        item { Text("${matches.size} de ${catalog.size} exercícios", color = Muted, fontSize = 13.sp) }
+        if (query.isNotBlank() || muscle != "Todos" || equipment != "Todos")
+            item { TextButton(onClick = { query = ""; muscle = "Todos"; equipment = "Todos" }) { Text("Limpar filtros") } }
         if (matches.isEmpty())
             item {
                 Text(
-                    "Nenhum exercício encontrado. Tente outro termo ou grupo muscular.",
+                    "Nenhum exercício encontrado. Altere a busca ou limpe os filtros.",
                     color = Muted,
                 )
             }
         items(matches, key = { it.id }) { exercise ->
             ExerciseRow(exercise, false) { onSelect(exercise) }
+        }
+    }
+}
+
+@Composable
+private fun EquipmentFilter(catalog: List<Exercise>, selected: String, onSelect: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        OutlinedButton(onClick = { expanded = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text("Equipamento: ${if (selected == "Todos") "Todos os equipamentos" else selected}", modifier = Modifier.weight(1f))
+            Icon(Icons.Outlined.ExpandMore, null)
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            (listOf("Todos") + catalog.map { it.equipment }.distinct().sorted()).forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(if (option == "Todos") "Todos os equipamentos" else option) },
+                    onClick = { onSelect(option); expanded = false },
+                    trailingIcon = { if (selected == option) Icon(Icons.Outlined.Check, "Selecionado") },
+                )
+            }
         }
     }
 }
@@ -2298,7 +2310,7 @@ private fun MuscleChips(selected: String, onSelect: (String) -> Unit) {
             FilterChip(
                 selected = selected == it,
                 onClick = { onSelect(it) },
-                label = { Text(it, fontSize = 11.sp) },
+                label = { Text(it, fontSize = 13.sp) },
                 colors =
                     FilterChipDefaults.filterChipColors(selectedContainerColor = Color(0xFFE6EED7)),
                 border =
@@ -2329,7 +2341,7 @@ private fun ExerciseRow(exercise: Exercise, selected: Boolean, onClick: () -> Un
             Glyph(exercise, 54)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(exercise.name, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                Text("${exercise.muscle} · ${exercise.equipment}", fontSize = 11.sp, color = Muted)
+                Text("${exercise.muscle} · ${exercise.equipment}${if (selected) " · Já adicionado" else ""}", fontSize = 13.sp, color = Muted)
             }
             Icon(
                 if (selected) Icons.Outlined.Check else Icons.Outlined.ArrowOutward,
@@ -2378,23 +2390,30 @@ private fun ExercisePicker(
 ) {
     var query by remember { mutableStateOf("") }
     var muscle by remember { mutableStateOf("Todos") }
+    var equipment by remember { mutableStateOf("Todos") }
+    val matches = filterExercises(catalog, query, muscle, equipment)
     FullScreenSheet(title, onDismiss) {
         OutlinedTextField(
             value = query,
             onValueChange = { query = it },
             leadingIcon = { Icon(Icons.Outlined.Search, null) },
             placeholder = { Text("Buscar exercício") },
+            label = { Text("Nome, músculo ou equipamento") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             shape = RoundedCornerShape(9.dp),
         )
-        MuscleChips(muscle) { muscle = it }
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            item { MuscleChips(muscle) { muscle = it } }
+            item { EquipmentFilter(catalog, equipment) { equipment = it } }
+            item { Text("${matches.size} de ${catalog.size} exercícios", color = Muted, fontSize = 13.sp) }
+            if (query.isNotBlank() || muscle != "Todos" || equipment != "Todos")
+                item { TextButton(onClick = { query = ""; muscle = "Todos"; equipment = "Todos" }) { Text("Limpar filtros") } }
+            if (matches.isEmpty()) item {
+                Text("Nenhum exercício encontrado. Altere a busca ou limpe os filtros.", color = Muted)
+            }
             items(
-                catalog.filter {
-                    (muscle == "Todos" || it.muscle == muscle) &&
-                        normalized("${it.name} ${it.equipment}").contains(normalized(query))
-                },
+                matches,
                 key = { it.id },
             ) { e ->
                 ExerciseRow(e, e.id in existing) { onSelect(e) }

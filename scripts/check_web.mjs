@@ -18,7 +18,7 @@ for(const width of [1440,1024,768,390,320]){
  assert(await page.getByRole('button',{name:'Salvar rotina',exact:true}).isDisabled());checks++;
  await page.getByRole('button',{name:'Adicionar exercício',exact:true}).click();
  await page.getByRole('textbox',{name:'Buscar exercício para adicionar'}).fill('Supino reto');
- await page.getByRole('button',{name:/Supino reto.*Peito/}).click();
+ await page.getByRole('button',{name:'Supino reto Peito · Barra',exact:true}).click();
  await page.getByRole('button',{name:'Salvar rotina',exact:true}).click();
  const card=page.locator('.routine-card').filter({has:page.getByRole('heading',{name:'Treino QA',exact:true})});
  await card.waitFor();assert.equal(await page.locator('.routine-card').count(),templates.length+1);checks++;
