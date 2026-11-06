@@ -1,5 +1,18 @@
 CURRENTTASK: Implementing the 1.0 release plan; 1.0.0-rc.1 source prepared.
 
+2026-10-30 continuation: hardened web finished-history sync. Different content
+under an existing workout ID now rejects the whole local merge, regardless of
+timestamps; identical wire records retain the local copy. React validates the
+merge inside the async error handler against the latest rendered workspace, so
+conflicts show feedback without crashing or losing edits made during the request.
+- Shared validation and nine domain/catalog tests passed.
+- Production web build passed under the verified 3 GiB/no-swap cap (467 MB peak).
+- 120 browser checks passed at five widths against a disposable real Go API,
+  including conflict feedback, unchanged local storage and successful retry;
+  capped run peaked at 881.1 MB, zero swap. Server stopped on runner exit.
+- No Android source changed, native build or publication performed. Real-phone
+  signed-candidate QA and independent signing-key backup remain release blockers.
+
 2026-10-30 verification pass: the two items left pending on 2026-10-29 (final
 browser rerun after the last CSS refinements, and native build/emulator evidence)
 are now closed on this working tree.

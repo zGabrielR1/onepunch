@@ -360,3 +360,21 @@
   diff whitespace check passed. The lightweight check passed: 27 exercises,
   nine templates and web domain test file. No native build, APK, device install,
   Go compilation, browser suite, source push or publication performed.
+# 2026-10-30 — web immutable-history sync continuation
+
+- Found web sync reused the routine timestamp merge for finished workouts,
+  allowing a conflicting remote record to replace local history. Added a
+  separate immutable-history merge comparing explicit wire fields, normalizing
+  numeric inputs and retaining local objects for identical records. Conflicts
+  reject the entire merge, including routine updates and sync metadata.
+- Moved merge validation outside the deferred React updater so failures reach
+  the sync feedback handler. The response merges against current rendered state
+  to preserve workout changes made while the request was in flight.
+- Added regression cases for older/equal/newer conflicts, set values/order and
+  metadata, numeric equivalents, repeated sync and unchanged local state.
+  Browser regression covers conflict feedback without a page error, byte-for-byte
+  unchanged local storage, then a successful real-API retry.
+- Verified: shared catalog/templates plus nine domain tests; production web
+  build (467 MB peak); 120 browser workflow checks across five widths (881.1 MB
+  peak). Build/browser jobs used the enforced 3 GiB process-tree cap, zero swap
+  and disposable API state. No native changes, publication or physical install.

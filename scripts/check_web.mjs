@@ -65,4 +65,17 @@ for(const width of [1440,1024,768,390,320]){
 }
 const c=await browser.newContext({viewport:{width:390,height:900}});const p=await c.newPage();await p.goto(url);await p.getByRole('button',{name:'Treino livre',exact:true}).click();const activeId=await p.evaluate(()=>JSON.parse(localStorage.getItem('onepunch.workspace.v1')).active.id);await p.getByRole('button',{name:'Voltar ao início'}).click();await p.getByRole('button',{name:'Sincronizar treinos'}).click();await p.getByRole('status').filter({hasText:'Tudo sincronizado'}).waitFor();
 const synced=await p.evaluate(()=>JSON.parse(localStorage.getItem('onepunch.workspace.v1')));assert.equal(synced.active.id,activeId);checks++;assert.equal(synced.workouts.length,1);checks++;assert.equal(synced.routines.length,templates.length+1);checks++;
+const syncErrors=[];p.on('pageerror',error=>syncErrors.push(error.message));
+const beforeConflict=await p.evaluate(()=>localStorage.getItem('onepunch.workspace.v1'));
+await p.route('**/api/sync',route=>route.fulfill({json:{
+ routines:synced.routines.map(r=>({...r,name:'Must not apply',updatedAt:r.updatedAt+10000})),
+ workouts:synced.workouts.map(w=>({...w,title:'Conflicting history',updatedAt:w.updatedAt+10000}))
+}}));
+await p.getByRole('button',{name:'Sincronizar treinos'}).click();
+await p.getByRole('status').filter({hasText:'Conflito no histórico:'}).waitFor();checks++;
+assert.equal(await p.evaluate(()=>localStorage.getItem('onepunch.workspace.v1')),beforeConflict);checks++;
+assert.deepEqual(syncErrors,[]);checks++;
+await p.unroute('**/api/sync');
+await p.getByRole('button',{name:'Sincronizar treinos'}).click();
+await p.getByRole('status').filter({hasText:'Tudo sincronizado'}).waitFor();checks++;
 await c.close();const broken=await browser.newContext();const recovery=await broken.newPage();await recovery.addInitScript(()=>localStorage.setItem('onepunch.workspace.v1','{invalid'));await recovery.goto(url);await recovery.getByRole('heading',{name:'Seus dados precisam de atenção.'}).waitFor();assert.equal(await recovery.evaluate(()=>localStorage.getItem('onepunch.workspace.v1')),'{invalid');checks++;await broken.close();await browser.close();console.log(`${checks} browser checks passed: 5 widths, routine creation, logging, rest timer, offline reload recovery, history, library, discard, and real Go API cross-client sync.`);

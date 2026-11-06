@@ -147,6 +147,10 @@ The store validates catalog references, limits and completed sets. History IDs
 are immutable; a changed record under an existing ID produces 409. Routine
 conflicts use modification timestamps, not real-time collaborative editing.
 Client merge retains any local active workout and newer local routine edits.
+Web finished-history merge rejects differing content under an existing workout
+ID before applying any response records or sync metadata. Numeric load/repetition
+representations are normalized for comparison; identical records retain the local
+copy. Sync conflicts surface as recoverable feedback without replacing local data.
 Native routine management supports archive/restore using the existing archived
 flag and updatedAt timestamp; archived routines stay in sync and out of the home
 recommendations. Duplicating creates a new routine ID and opens an unsaved draft,

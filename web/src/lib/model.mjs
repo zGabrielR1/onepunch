@@ -139,12 +139,29 @@ export function mergeRecords(local, remote) {
       all.set(entry.id, entry);
   return [...all.values()];
 }
+// Compare the wire fields explicitly: JSON property order and local numeric
+// input strings must not create conflicts with the API's numeric representation.
+const workoutContent = (workout) => JSON.stringify([
+  workout.id, workout.routineId ?? null, workout.title,
+  workout.startedAt, workout.endedAt, workout.updatedAt, workout.note || "",
+  workout.sets.map((set) => [
+    set.id, set.exerciseId, number(set.weight), number(set.reps), set.done,
+  ]),
+]);
+export function mergeWorkouts(local, remote) {
+  const all = new Map(local.map((workout) => [workout.id, workout]));
+  for (const workout of remote) {
+    const prior = all.get(workout.id);
+    if (prior && workoutContent(prior) !== workoutContent(workout))
+      throw Error("Conflito no histórico: um treino já salvo tem conteúdo diferente. Seus dados locais foram preservados.");
+    if (!prior) all.set(workout.id, workout);
+  }
+  return [...all.values()].sort((a, b) => b.endedAt - a.endedAt);
+}
 export const mergeSynced = (state, remote, now = Date.now()) => ({
   ...state,
   routines: mergeRecords(state.routines, remote.routines),
-  workouts: mergeRecords(state.workouts, remote.workouts).sort(
-    (a, b) => b.endedAt - a.endedAt,
-  ),
+  workouts: mergeWorkouts(state.workouts, remote.workouts),
   lastSyncedAt: now,
 });
 export function dayKey(time) {

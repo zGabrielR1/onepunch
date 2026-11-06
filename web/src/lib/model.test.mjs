@@ -76,3 +76,58 @@ test("previous performance prefills a new session without marking sets complete"
   );
   assert.throws(() => readState("{broken", []));
 });
+
+function finishedFixture() {
+  const state = emptyState([routine]);
+  state.active = startWorkout(routine, [], 1000);
+  state.active.sets[0].weight = "20,5";
+  state.active = toggleSet(state.active, state.active.sets[0].id, 2000);
+  return finishWorkout(state, 3000);
+}
+
+test("history conflicts reject the whole sync regardless of record timestamp", () => {
+  for (const updatedAt of [2000, 3000, 4000]) {
+    const state = finishedFixture();
+    state.active = startWorkout(routine, state.workouts, 5000);
+    const before = structuredClone(state);
+    const changed = { ...state.workouts[0], title: "Different", updatedAt };
+    assert.throws(() => mergeSynced(state, {
+      routines: [{ ...routine, name: "Remote edit", updatedAt: 9000 }],
+      workouts: [{ ...changed, id: "new-workout" }, changed],
+    }, 10000), /Conflito no histórico/);
+    assert.deepEqual(state, before);
+  }
+});
+
+test("identical history round trips accept numeric inputs and retain local records", () => {
+  const state = finishedFixture();
+  const original = state.workouts[0];
+  const wire = {
+    ...original,
+    sets: original.sets.map((set) => ({ ...set, weight: "20,50", reps: "10" })),
+  };
+  const remote = { routines: [], workouts: [wire, { ...original, id: "remote", endedAt: 4000 }] };
+  const once = mergeSynced(state, remote, 6000);
+  const twice = mergeSynced(once, remote, 7000);
+  assert.equal(twice.workouts.length, 2);
+  assert.equal(twice.workouts[1], original);
+  assert.equal(twice.lastSyncedAt, 7000);
+});
+
+test("sync detects changes in finished set values, ordering and workout metadata", () => {
+  const state = finishedFixture();
+  const original = state.workouts[0];
+  original.sets.push({ ...original.sets[0], id: "second-set", weight: 25 });
+  for (const change of [
+    { note: "Changed" }, { routineId: "different" }, { startedAt: 999 },
+    { endedAt: 4000 }, { updatedAt: 4000 },
+    { sets: original.sets.map((set) => ({ ...set, weight: 0 })) },
+    { sets: original.sets.map((set) => ({ ...set, reps: 11 })) },
+    { sets: original.sets.map((set) => ({ ...set, done: false })) },
+    { sets: [...original.sets].reverse() },
+  ]) {
+    assert.throws(() => mergeSynced(state, {
+      routines: [], workouts: [{ ...original, ...change }],
+    }), /Conflito no histórico/);
+  }
+});

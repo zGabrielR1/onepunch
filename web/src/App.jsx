@@ -530,6 +530,8 @@ function App() {
     }
   });
   const [state, setState] = useState(initial.state);
+  const stateRef = useRef(state);
+  stateRef.current = state;
   const [view, setView] = useState("home");
   const [modal, setModal] = useState(null);
   const [toast, setToast] = useState("");
@@ -611,11 +613,17 @@ function App() {
         throw Error(data.error || "Não foi possível sincronizar.");
       if (!Array.isArray(data.routines) || !Array.isArray(data.workouts))
         throw Error("Resposta inválida do servidor.");
-      setState((s) => mergeSynced(s, data));
+      // Merge against the current workspace after the request, including any
+      // workout finished while waiting. Validate here so errors reach this catch
+      // instead of escaping from a deferred React state updater.
+      const merged = mergeSynced(stateRef.current, data);
+      setState(merged);
       setToast("Tudo sincronizado. Seu treino em andamento continua aqui.");
-    } catch {
+    } catch (error) {
       setToast(
-        "Servidor indisponível. Seus treinos continuam salvos neste dispositivo.",
+        error.message?.startsWith("Conflito no histórico:")
+          ? error.message
+          : "Não foi possível sincronizar. Seus treinos continuam salvos neste dispositivo.",
       );
     } finally {
       setSyncing(false);
