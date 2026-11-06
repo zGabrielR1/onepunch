@@ -1,5 +1,15 @@
 # Progress
 
+## 2026-11-05 — 100 exercises, 17 templates, 1.0.0-rc.2 local validation
+
+- Expanded shared/catalog.json 60 -> 100 with 40 stable IDs (smith-bench-press, smith-incline-bench, dips, incline-cable-fly, dumbbell-pullover, close-grip-bench, t-bar-row, assisted-pull-up, assisted-chin-up, one-arm-pulldown, cable-pullover, hyperextension, landmine-row, standing-calf-raise, sumo-deadlift, good-morning, smith-squat, hack-squat, walking-lunge, glute-bridge, calf-press, machine-hip-thrust, front-raise, arnold-press, upright-row, shrug, machine-lateral-raise, landmine-press, incline-curl, concentration-curl, spider-curl, cable-hammer-curl, dumbbell-skullcrusher, cable-kickback, diamond-push-up, dead-bug, russian-twist, pallof-press, hanging-leg-raise, machine-crunch). All rep-based; no timed holds forced into kg x reps.
+- Added shared/routines.json ppl-push, ppl-pull, ppl-legs, personal-legs, personal-back-biceps, personal-chest-triceps, personal-back-biceps-b, personal-chest-triceps-extra (each 7 distinct exercises, 3x10 @90s). Fresh workspaces seed 17; existing workspaces never reseeded.
+- Android readability bump: 10sp -> 11sp (Eyebrow, nav labels, week-day labels, history dates), Metric label 11->12sp. Updated README/ARCHITECTURE counts, catalog.test.mjs (Máquina×Supino now 3 hits) and check_catalog_ui.mjs (1->3).
+- Bumped shared/release.properties to 1.0.0-rc.2/code5, web versions, added docs/releases/v1.0.0-rc.2.md. release_config.py + 13 release tests pass.
+- Local evidence: check-light 100/17 + 9/9 tests; npm test 9/9; vite build ok; go test ./... ok (race deferred to hosted due to missing gcc); browser 120 + 52 = 172 pass vs disposable Go API; native assembleDebug + 71/71 JVM tests pass, APK sha256 156bf35d... 
+- VM attempt: SDK 36 + emulator 37.2.13 installed under /var/tmp/onepunch-android-sdk, JDK 17 Temurin, AVD onepunch-qa created. Emulator reaches gfxstream/Vulkan init but exits before adb boot_completed on this host; no UI harness run. Hosted signed candidate remains the gate for release-variant + race coverage.
+- Pushed via SSH: origin git@github.com:zGabrielR1/onepunch.git; release/1.0.0-rc.2 at a1ddef4. Publication still blocked pending signed-candidate run + exact-artifact device QA.
+
 ## 2026-10-30 — pending verification finished locally
 
 - Closed the two items left open on 2026-10-29: the browser rerun after the final

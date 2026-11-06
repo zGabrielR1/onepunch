@@ -1,3 +1,15 @@
+CURRENTTASK: 1.0.0-rc.2 source prepared (100 exercises, 17 templates); local validation passing, awaiting signed-candidate dispatch.
+
+2026-11-05 expansion: catalog 60 -> 100 (+40 rep-based kg x reps: 6 Peito, 7 Costas, 9 Pernas, 6 Ombros, 7 Braços, 5 Core; timed holds excluded per backlog). Routines 9 -> 17 (+PPL Empurrar/Puxar/Pernas and 5-day personalized: Dia 1 Pernas, Dia 2 Costas e bíceps, Dia 3 Peito e tríceps, Dia 4 Costas e bíceps B, Dia 5 Peito/tríceps e extras ombros+core). UI: smallest Android text 10sp -> 11sp (Metric 11->12sp). Version 1.0.0-rc.1/code4 -> 1.0.0-rc.2/code5.
+- Light check: "Shared data valid: 100 exercises, 17 templates." 9/9 tests pass.
+- Web: npm test 9/9 pass; npm run build passes (vite 7.3.7, 1583 modules).
+- Go: `go test ./...` passes (Go 1.26.0 local). `-race` skipped locally: no gcc/cgo on this Fedora host; hosted CI will cover -race.
+- Browser: 120 checks (check_web.mjs) + 52 checks (check_catalog_ui.mjs) = 172 pass at 1440/1024/768/390/320 against disposable API on :8098 with real Go API. Screenshots in build/qa-after/.
+- Native local: assembleDebug + 71 JVM tests pass (0 failures/errors/skips) with JDK 17 / SDK 36. Debug APK android/app/build/outputs/apk/debug/app-debug.apk, SHA-256 156bf35d96459bc8d592dd2affca50b362fdf422f61e871b64fd4cb41f93779d (18 MB).
+- Android VM: AVD onepunch-qa (Android 35 google_apis x86_64) created and emulator binary launched (gfxstream init ok) but host crashed/exited before sys.boot_completed; `adb devices` never showed emulator-5580. Logs: /tmp/opencode/emulator.log. No check_android_ui.py run; physical-device QA still pending separately.
+- SSH origin switched to git@github.com:zGabrielR1/onepunch.git; branches release/1.0.0-rc.1 (12e3ad7) and release/1.0.0-rc.2 (a1ddef4) pushed.
+- Next: dispatch Signed release candidate (candidate.yml) on release/1.0.0-rc.2 via GitHub Actions web UI (gh not authed locally), then exact-artifact device QA before any promotion. Real-phone QA and independent key backup remain blockers.
+
 CURRENTTASK: Implementing the 1.0 release plan; 1.0.0-rc.1 source prepared.
 
 2026-10-30 continuation: hardened web finished-history sync. Different content
