@@ -97,7 +97,7 @@ private fun muscleColor(muscle: String) =
 private fun Eyebrow(text: String) {
     Text(
         text,
-        fontSize = 10.sp,
+        fontSize = 11.sp,
         letterSpacing = 1.2.sp,
         color = Muted,
         fontWeight = FontWeight.SemiBold,
@@ -140,7 +140,7 @@ private fun Glyph(exercise: Exercise, size: Int = 48) {
 private fun Metric(value: String, label: String, modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(5.dp)) {
         Text(value, fontSize = 25.sp, letterSpacing = (-.6).sp, fontWeight = FontWeight.SemiBold)
-        Text(label, fontSize = 11.sp, color = Muted)
+        Text(label, fontSize = 12.sp, color = Muted)
     }
 }
 
@@ -464,7 +464,7 @@ fun OnepunchApp() {
                                     selected = screen == item,
                                     onClick = { screen = item },
                                     icon = { Icon(item.icon, null, Modifier.size(22.dp)) },
-                                    label = { Text(item.label, fontSize = 10.sp) },
+                                    label = { Text(item.label, fontSize = 11.sp) },
                                     colors =
                                         NavigationBarItemDefaults.colors(
                                             indicatorColor = Color(0xFFE5EDCF),
@@ -557,7 +557,7 @@ fun OnepunchApp() {
                                                     date.format(
                                                         DateTimeFormatter.ofPattern("EEEEE", Br),
                                                     ),
-                                                    fontSize = 10.sp,
+                                                    fontSize = 11.sp,
                                                     color = Muted,
                                                 )
                                                 Box(
@@ -2224,7 +2224,7 @@ private fun HistoryRow(workout: Workout, onClick: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Surface(color = Paper, shape = RoundedCornerShape(8.dp)) {
-            Text(date(workout.endedAt), Modifier.padding(10.dp), fontSize = 10.sp, color = Muted)
+            Text(date(workout.endedAt), Modifier.padding(10.dp), fontSize = 11.sp, color = Muted)
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(workout.title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)

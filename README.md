@@ -22,9 +22,11 @@ the client capability inventory and open release blockers. The source is now a
   including active inputs and routine drafts. Imports show a merge preview,
   preserve immutable history and keep an exportable pre-restore safety copy.
 
-- Shared library of 60 exercises and nine editable routine examples, each with
+- Shared library of 100 exercises and 17 editable routine examples, each with
   seven exercises: Superior A/B, Inferior A/B, Empurrar, Puxar, Corpo inteiro A/B,
-  and Com halteres. Exercise choices and initial set/rep/rest values are editable.
+  Com halteres, PPL Empurrar/Puxar/Pernas, and the five-day personalized split
+  (Pernas, Costas e bíceps, Peito e tríceps, Costas e bíceps B, Peito/tríceps e
+  extras). Exercise choices and initial set/rep/rest values are editable.
 - Modelos prontos in Treinos opens the full template library, including on an
   existing installation. Usar modelo opens a new editable copy before saving;
   existing routines, archived items and workout history are never replaced.

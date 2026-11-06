@@ -5,7 +5,7 @@ format. Native UI is Kotlin/Jetpack Compose; the React app runs in the browser.
 Go serves the compiled web assets and provides a personal sync API. Runtime data
 is separate from source and the initial seed contains routines, never history.
 
-Shared content contains 60 exercises and nine editable routine examples, each
+Shared content contains 100 exercises and 17 editable routine examples, each
 with seven distinct exercises and editable initial set/rep/rest values. Existing
 seed IDs remain stable. Fresh workspaces receive the expanded examples; existing
 workspaces are never reseeded or overwritten. Both clients expose Modelos prontos

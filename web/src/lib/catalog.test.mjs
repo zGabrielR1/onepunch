@@ -20,7 +20,7 @@ test("catalog search combines accent-insensitive words, muscle and equipment wit
   );
   assert.deepEqual(
     matches.map((e) => e.id),
-    ["machine-chest-press"],
+    ["machine-chest-press", "smith-bench-press", "smith-incline-bench"],
   );
   assert.equal(filterExercises(catalog, "supino", "Costas").length, 0);
   assert.equal(

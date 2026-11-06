@@ -36,7 +36,7 @@ try {
     await page
       .getByRole("textbox", { name: "Buscar na biblioteca" })
       .fill(" MAQUINA  SUPINO ");
-    assert.equal(await page.locator(".exercise-card").count(), 1);
+    assert.equal(await page.locator(".exercise-card").count(), 3);
     checks++;
     await page.getByRole("button", { name: "Costas", exact: true }).click();
     await page

@@ -418,5 +418,285 @@
     "muscle": "Core",
     "equipment": "Peso corporal",
     "description": "Registre zero kg quando não houver carga adicional."
+  },
+  {
+    "id": "smith-bench-press",
+    "name": "Supino no Smith",
+    "muscle": "Peito",
+    "equipment": "Máquina",
+    "description": "Registre a carga total, incluindo a barra do Smith."
+  },
+  {
+    "id": "smith-incline-bench",
+    "name": "Supino inclinado no Smith",
+    "muscle": "Peito",
+    "equipment": "Máquina",
+    "description": "Registre a carga total, incluindo a barra do Smith."
+  },
+  {
+    "id": "dips",
+    "name": "Paralelas",
+    "muscle": "Peito",
+    "equipment": "Peso corporal",
+    "description": "Registre somente a carga adicional; sem carga adicional, use zero kg."
+  },
+  {
+    "id": "incline-cable-fly",
+    "name": "Crucifixo inclinado na polia",
+    "muscle": "Peito",
+    "equipment": "Polia",
+    "description": "Registre a carga indicada na polia utilizada."
+  },
+  {
+    "id": "dumbbell-pullover",
+    "name": "Pullover com halteres",
+    "muscle": "Peito",
+    "equipment": "Halteres",
+    "description": "Registre a soma das cargas dos dois halteres."
+  },
+  {
+    "id": "close-grip-bench",
+    "name": "Supino fechado",
+    "muscle": "Peito",
+    "equipment": "Barra",
+    "description": "Registre a carga total, incluindo a barra."
+  },
+  {
+    "id": "t-bar-row",
+    "name": "Remada T-bar",
+    "muscle": "Costas",
+    "equipment": "Barra",
+    "description": "Registre a carga total, incluindo a barra e o suporte."
+  },
+  {
+    "id": "assisted-pull-up",
+    "name": "Barra fixa assistida",
+    "muscle": "Costas",
+    "equipment": "Máquina",
+    "description": "Registre a carga de assistência indicada na máquina utilizada."
+  },
+  {
+    "id": "assisted-chin-up",
+    "name": "Queixada assistida",
+    "muscle": "Costas",
+    "equipment": "Máquina",
+    "description": "Registre a carga de assistência indicada na máquina utilizada."
+  },
+  {
+    "id": "one-arm-pulldown",
+    "name": "Puxada unilateral",
+    "muscle": "Costas",
+    "equipment": "Polia",
+    "description": "Registre as repetições por lado e a carga indicada na polia utilizada."
+  },
+  {
+    "id": "cable-pullover",
+    "name": "Pullover na polia",
+    "muscle": "Costas",
+    "equipment": "Polia",
+    "description": "Registre a carga indicada na polia utilizada."
+  },
+  {
+    "id": "hyperextension",
+    "name": "Extensão lombar",
+    "muscle": "Costas",
+    "equipment": "Peso corporal",
+    "description": "Registre zero kg quando não houver carga adicional."
+  },
+  {
+    "id": "landmine-row",
+    "name": "Remada landmine",
+    "muscle": "Costas",
+    "equipment": "Barra",
+    "description": "Registre a carga total, incluindo a barra."
+  },
+  {
+    "id": "standing-calf-raise",
+    "name": "Panturrilha em pé",
+    "muscle": "Pernas",
+    "equipment": "Máquina",
+    "description": "Registre a carga indicada na máquina utilizada."
+  },
+  {
+    "id": "sumo-deadlift",
+    "name": "Levantamento terra sumô",
+    "muscle": "Pernas",
+    "equipment": "Barra",
+    "description": "Registre a carga total, incluindo a barra."
+  },
+  {
+    "id": "good-morning",
+    "name": "Bom dia",
+    "muscle": "Pernas",
+    "equipment": "Barra",
+    "description": "Registre a carga total, incluindo a barra."
+  },
+  {
+    "id": "smith-squat",
+    "name": "Agachamento no Smith",
+    "muscle": "Pernas",
+    "equipment": "Máquina",
+    "description": "Registre a carga total, incluindo a barra do Smith."
+  },
+  {
+    "id": "hack-squat",
+    "name": "Agachamento hack",
+    "muscle": "Pernas",
+    "equipment": "Máquina",
+    "description": "Registre a carga indicada na máquina utilizada."
+  },
+  {
+    "id": "walking-lunge",
+    "name": "Avanço andando",
+    "muscle": "Pernas",
+    "equipment": "Halteres",
+    "description": "Registre as repetições por lado e a soma das cargas dos halteres."
+  },
+  {
+    "id": "glute-bridge",
+    "name": "Ponte de glúteos",
+    "muscle": "Pernas",
+    "equipment": "Peso corporal",
+    "description": "Registre zero kg quando não houver carga adicional."
+  },
+  {
+    "id": "calf-press",
+    "name": "Panturrilha no leg press",
+    "muscle": "Pernas",
+    "equipment": "Máquina",
+    "description": "Registre a carga indicada na máquina utilizada."
+  },
+  {
+    "id": "machine-hip-thrust",
+    "name": "Elevação pélvica na máquina",
+    "muscle": "Pernas",
+    "equipment": "Máquina",
+    "description": "Registre a carga indicada na máquina utilizada."
+  },
+  {
+    "id": "front-raise",
+    "name": "Elevação frontal",
+    "muscle": "Ombros",
+    "equipment": "Halteres",
+    "description": "Registre a soma das cargas dos dois halteres."
+  },
+  {
+    "id": "arnold-press",
+    "name": "Desenvolvimento Arnold",
+    "muscle": "Ombros",
+    "equipment": "Halteres",
+    "description": "Registre a soma das cargas dos dois halteres."
+  },
+  {
+    "id": "upright-row",
+    "name": "Remada alta",
+    "muscle": "Ombros",
+    "equipment": "Barra",
+    "description": "Registre a carga total, incluindo a barra."
+  },
+  {
+    "id": "shrug",
+    "name": "Encolhimento",
+    "muscle": "Ombros",
+    "equipment": "Halteres",
+    "description": "Registre a soma das cargas dos dois halteres."
+  },
+  {
+    "id": "machine-lateral-raise",
+    "name": "Elevação lateral na máquina",
+    "muscle": "Ombros",
+    "equipment": "Máquina",
+    "description": "Registre a carga indicada na máquina utilizada."
+  },
+  {
+    "id": "landmine-press",
+    "name": "Desenvolvimento landmine",
+    "muscle": "Ombros",
+    "equipment": "Barra",
+    "description": "Registre a carga total, incluindo a barra."
+  },
+  {
+    "id": "incline-curl",
+    "name": "Rosca inclinada",
+    "muscle": "Braços",
+    "equipment": "Halteres",
+    "description": "Registre a soma das cargas dos dois halteres."
+  },
+  {
+    "id": "concentration-curl",
+    "name": "Rosca concentrada",
+    "muscle": "Braços",
+    "equipment": "Halteres",
+    "description": "Registre as repetições por braço e a carga do halter utilizado."
+  },
+  {
+    "id": "spider-curl",
+    "name": "Rosca aranha",
+    "muscle": "Braços",
+    "equipment": "Barra",
+    "description": "Registre a carga total, incluindo a barra."
+  },
+  {
+    "id": "cable-hammer-curl",
+    "name": "Rosca martelo na polia",
+    "muscle": "Braços",
+    "equipment": "Polia",
+    "description": "Registre a carga indicada na polia utilizada."
+  },
+  {
+    "id": "dumbbell-skullcrusher",
+    "name": "Tríceps testa com halteres",
+    "muscle": "Braços",
+    "equipment": "Halteres",
+    "description": "Registre a soma das cargas dos dois halteres."
+  },
+  {
+    "id": "cable-kickback",
+    "name": "Tríceps kickback na polia",
+    "muscle": "Braços",
+    "equipment": "Polia",
+    "description": "Registre as repetições por lado e a carga indicada na polia utilizada."
+  },
+  {
+    "id": "diamond-push-up",
+    "name": "Flexão diamante",
+    "muscle": "Braços",
+    "equipment": "Peso corporal",
+    "description": "Registre zero kg quando não houver carga adicional."
+  },
+  {
+    "id": "dead-bug",
+    "name": "Dead bug",
+    "muscle": "Core",
+    "equipment": "Peso corporal",
+    "description": "Registre zero kg quando não houver carga adicional."
+  },
+  {
+    "id": "russian-twist",
+    "name": "Torção russa",
+    "muscle": "Core",
+    "equipment": "Peso corporal",
+    "description": "Registre zero kg quando não houver carga adicional."
+  },
+  {
+    "id": "pallof-press",
+    "name": "Pallof press",
+    "muscle": "Core",
+    "equipment": "Polia",
+    "description": "Registre a carga indicada na polia utilizada."
+  },
+  {
+    "id": "hanging-leg-raise",
+    "name": "Elevação de pernas suspenso",
+    "muscle": "Core",
+    "equipment": "Peso corporal",
+    "description": "Registre zero kg quando não houver carga adicional."
+  },
+  {
+    "id": "machine-crunch",
+    "name": "Abdominal na máquina",
+    "muscle": "Core",
+    "equipment": "Máquina",
+    "description": "Registre a carga indicada na máquina utilizada."
   }
 ]
