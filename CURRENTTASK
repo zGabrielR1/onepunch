@@ -1,3 +1,7 @@
+CURRENTTASK: Publish verified RC.3; prepare RC.4 signed candidate for owner-authorized connected-phone QA.
+
+RC.3 exact checked artifacts published at https://github.com/zGabrielR1/onepunch/releases/tag/v1.0.0-rc.3, source 2fc88ad39de104cba15a280a40e95f60f1596e3e. RC.4/code7 changes release identity only; product behavior unchanged. Added physical-device checklist. Owner authorized connected Android test phone; adb devices currently empty, USB/debug authorization requested. No phone installation, data clearing or device QA has occurred. Signed RC.4 build pending.
+
 CURRENTTASK: RC.3 signed candidate built and verified; device QA pending.
 
 RC.3 signed candidate verified: run 42521634710 for 2fc88ad39de104cba15a280a40e95f60f1596e3e passed signed release compilation, 77 JVM tests (zero failures/errors/skips), 21 release-tooling tests, 17 domain/catalog tests, production build, four Go race tests, 226 browser workflow assertions and extracted Linux-bundle smoke checks. Downloaded all artifacts; five checksum entries passed and source/version/release variant matched. Reviewed manual-rest-320.png: timer buttons wrap and inputs remain visible without horizontal clipping.

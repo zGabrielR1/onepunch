@@ -1,3 +1,7 @@
+# 2026-11-08 — RC.3 published; RC.4 physical QA preparation
+
+Published exact verified signed RC.3 assets without rebuilding after source/version/certificate/checksum/unused-tag validation. Prepared RC.4/code7 with unchanged product behavior for signed update and physical-device QA. Added docs/qa/RC4_DEVICE_QA.md; owner authorized connected test phone but ADB currently lists no devices. No installation or QA pass claimed.
+
 # 2026-11-08 — RC.3 signed hosted verification passed
 
 RC.3 signed candidate verified: run 42521634710 for 2fc88ad39de104cba15a280a40e95f60f1596e3e passed signed release compilation, 77 JVM tests (zero failures/errors/skips), 21 release-tooling tests, 17 domain/catalog tests, production build, four Go race tests, 226 browser workflow assertions and extracted Linux-bundle smoke checks. Downloaded all artifacts; five checksum entries passed and source/version/release variant matched. Reviewed manual-rest-320.png: timer buttons wrap and inputs remain visible without horizontal clipping.
