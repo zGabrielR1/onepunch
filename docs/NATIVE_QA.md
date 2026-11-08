@@ -1,5 +1,19 @@
 # Native QA handoff
 
+## Current RC.4 physical-device pass — 2026-11-08
+
+Use [the RC.4 checklist](qa/RC4_DEVICE_QA.md) and exact-artifact report
+`qa/v1_0_0_rc_4.json`. Owner authorized the connected Samsung SM-A315G
+(Android 12) test phone. RC.3 was installed on the previously empty test app
+slot to establish a signed-upgrade baseline. Test exports/screenshots remain
+in ignored `build/qa-device-rc4/`; no personal data is committed.
+
+The older version counts, unexecuted-test statements and hosted-only restrictions
+below are historical. Current policy permits capped local builds; current catalog
+has 100 exercises/17 templates. Signed RC.3 hosted tests passed, but its UI
+observations do not substitute for an RC.4 exact-artifact test. The emulator-only
+harness must never target this phone.
+
 ## Local development QA policy — 2026-10-29
 
 The owner now authorizes local builds and UI tests with a maximum RAM limit,
