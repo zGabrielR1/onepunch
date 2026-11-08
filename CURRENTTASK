@@ -1,3 +1,66 @@
+CURRENTTASK: Owner requested GitHub release; signed RC.2 prerelease shipment prepared, host execution pending.
+
+2026-11-08: Explicit authorization to build and ship to GitHub. Added optional publish_prerelease=false input to signed candidate workflow; opt-in publication job depends on successful signed build, validates source/version/certificate/hashes/unused tag and publishes the same files as a prerelease. Stable promotion gates remain separate.
+New check_prerelease.py and eight publication-boundary regression tests pass: total21 release-tooling tests. YAML parsed; shell syntax and release identity checks pass. Product source remains the locally verified 77-JVM/16-web/233-browser tree.
+ship-prerelease.sh requires a clean committed branch, uses GitHub CLI owner authentication, checks tag/repository, pushes exact source without force, dispatches and watches the signed workflow, then downloads/checks release hashes and source. Install gh on host if missing; run script without sudo. No private keys accessed.
+This shell cannot resolve github.com, has no GitHub credential helper/API token or gh, and SSH system-config permissions are restricted. GitHub plugin search supplied no usable connection. No GitHub upload/build/publication has occurred in this session. Host launch is the remaining operational dependency; source/preparation does not imply a published release.
+
+CURRENTTASK: RC.2 development automated verification complete; signed-candidate/device gates remain open.
+
+2026-11-08: Android debug build + 77 JVM tests passed (zero failures/errors/skips). Host web-only run build/verification-sZwVOAeV passed 16 web tests, 13 release-tooling tests, production build, Go race tests, 181 workflow + 52 catalog/layout browser checks (233 total). All 53 source hashes match at review. Reviewed 320px enlarged-text session and picker screenshots; no clipping in those states. Verified 3 GiB/no swap; web peak 1.6G per host.
+Evidence: docs/qa/v1_0_0_rc_2_automated.json and docs/RELEASE_STATUS.md. Source remains uncommitted on base cfdc351, version RC.2/code5. Next: reviewed source commit and fresh signed candidate, exact-artifact physical-device QA, independent key backup confirmation and authorized final promotion. No publication or device installation. Earlier pending-check entries below are historical.
+
+CURRENTTASK: Web production build passed; Go/browser retry after explicit cache configuration.
+
+2026-11-08 host --web-only run build/verification-RaVOXQtL: 16 web tests, 13 release-tooling tests and Vite production build passed. Go failed before compilation because the transient service had no HOME/XDG_CACHE_HOME or GOCACHE. Android's prior 77-test/debug-build pass remains valid separately.
+Updated runner to configure GOCACHE, GOPATH, GOMODCACHE, npm cache and XDG cache explicitly under ignored build/local-tools, plus disk-backed scratch TMPDIR. Verified Go resolves its configured cache/module paths with HOME and XDG_CACHE_HOME removed; shell syntax passes. No Go race/browser pass yet. Next: sudo bash scripts/check-all-local.sh --web-only.
+
+CURRENTTASK: Android build and 77 JVM tests passed on host; web/browser retry pending after npm timeout.
+
+2026-11-08 host run build/verification-XDpBtAva: assembleDebug/testDebugUnitTest BUILD SUCCESSFUL in 5m2s. Parsed copied XML: 14 suites, 77 tests, zero failures/errors/skips, including AssistedLoadTest and HistoryIntegrityTest. APK SHA-256 44ddfeb14d870e55b6b452d2257fbe74dbbcd017664d688fc42a8906dcc59f94. Host systemd report: 3 GiB limit, zero swap, peak 3G.
+Run stopped at npm ci with ETIMEDOUT; no production/browser/Go pass is implied. Added --web-only to run remaining checks without rebuilding Android, bounded npm retry/timeouts and low download concurrency, and report ownership restoration on exit. WEB-PASSED.txt marks only successful web/Go/browser verification; full PASSED.txt remains reserved for a complete job.
+Next host command: sudo bash scripts/check-all-local.sh --web-only. Real Android device UI and signed-release candidate gates remain separate and open. No installation/publication.
+
+CURRENTTASK: Host cap verified by owner; verification awaits missing toolchains.
+
+2026-11-08 host attempt successfully enforced 3 GiB/no swap, then stopped before tests because Go was absent. Local preflight confirms three missing prerequisites: Go, JDK17 and a C compiler. SDK36/build-tools36 are present.
+Updated check-all-local.sh to report all missing prerequisites at once, support --preflight without launching a heavy job, and detect Fedora Temurin JDK17 paths. Shell syntax passes; preflight correctly reports the three missing prerequisites. Fedora setup: install golang, gcc and adoptium-temurin-java-repository, then temurin-17-jdk from the Temurin repository. Re-run the same capped host runner after installation. No fresh Android/browser test pass yet.
+
+CURRENTTASK: 2026-11-08 owner authorized Android/browser execution on main machine; session sandbox still blocks host jobs.
+
+- Rechecked SDK/Chromium availability, system and user systemd buses, and delegated cgroup access. Both bus operations fail with Operation not permitted; cgroup controls are not writable. This is execution-session confinement, not missing owner authorization.
+- Added scripts/check-all-local.sh: one capped host job running source checks, Android debug/JVM, production web build, Go race checks and both real-browser suites serially. Uses separate fresh API files/ports per browser suite and traps server cleanup. Saves source hashes/patch, logs, XML, APK hash and screenshots under build/verification-*; PASSED.txt only on complete success.
+- Host prerequisites: Node 22/npm, Go 1.26, C compiler, JDK17, SDK36/build-tools36, systemd access and network for dependencies. No device installation or publication. Browser assertions do not imply Android device UI testing.
+- Runner shell syntax and browser harness syntax pass. Invoking the runner here fails at the cap launcher before any heavy job starts. Run `sudo bash scripts/check-all-local.sh` from an unrestricted host terminal; default SDK is /var/tmp/onepunch-android-sdk, JDK17 autodetected at standard Debian/Fedora paths.
+- Existing implementation evidence and open release gates follow. Do not describe heavy checks as passed until fresh reports exist.
+
+CURRENTTASK: 2026-11-08 Android immutable-history and web recovery hardening implemented.
+
+- Native finish now rejects active/history ID collisions. Sync rejects changed finished records at every timestamp, retains identical local records, preserves active state and reports a specific history conflict. Backup restore shares the same numeric-equivalence comparator.
+- Added four Android JVM regressions for atomic conflict rejection, numeric/idempotent round trips, metadata/set changes and finish collisions. These are added but not executed here.
+- Web loading distinguishes missing storage from unreadable empty storage and checks nested record structure before render. Sync uses the same check before applying a response. Unfinished strings and timer deadlines are preserved unchanged.
+- Added three web regressions plus 16 browser assertions for invalid sync responses, finish collisions and empty/malformed local storage. Web/domain checks, 13 release tests, JS syntax, release config and whitespace pass; browser/JVM execution pending.
+- Existing heavy-verification limitation persists: required capped systemd workflow is unavailable in this sandbox. No repeated launcher attempt or uncapped fallback this pass. Fresh signed-candidate/device verification and independent key backup still block release.
+- No version bump, hosted dispatch, installation or publication. Earlier context below is historical; latest status is this entry and docs/RELEASE_STATUS.md.
+
+CURRENTTASK: 2026-11-08 assisted-load correction implemented; fresh candidate verification pending.
+
+- Both domains now exclude assisted-pull-up/assisted-chin-up from lifted volume; UIs label assistance explicitly and exclude it from highest-load records. Native load/volume comparisons are omitted for these IDs.
+- Raw values, stable IDs, completed-set counts, history, prefills, replay and version-1 sync/backup formats remain intact; no destructive migration. Old clients need updating for consistent derived metrics.
+- Added one web domain regression and two Android JVM tests; extended browser harness with 45 assertions across five widths for assisted input, reload, finish, history, volume, record exclusion and overflow.
+- Light checks and 13 release-tooling regressions pass. Android tests and new browser assertions are not executed: required capped launcher again fails with systemd bus access denied. No uncapped heavy jobs, hosted dispatch, device install or publication.
+- R6 is implemented, verification pending. Next: capped/hosted build of this source, fresh signed candidate, exact-artifact real-device QA, independent owner signing-key backup, then authorized promotion.
+
+CURRENTTASK: 2026-11-08 release hardening; RC.2 signed-candidate and device gates remain open.
+
+- Reviewed prior RC.2 work at cfdc351; retained 100 exercises/17 templates and version/code unchanged.
+- Fixed web previous-performance suggestions leaking invalid completed rows, fractional routine rest intervals passing validation, and finish replacing immutable history on active/history ID collision.
+- Finish validation now runs before React state replacement, with recoverable feedback and the active workout retained on rejection. Three focused domain regressions added.
+- Current checks: check-light passes both test files (100 exercises/17 templates); 13 Python release-tooling tests pass; release version consistency and git diff --check pass.
+- Heavy verification attempted through scripts/local-limited.sh; systemd bus access denied by this sandbox. No uncapped fallback, fresh build, browser run, Android run, hosted dispatch, device installation or publication.
+- Next: run capped build/browser checks or signed candidate.yml against reviewed source, then exact-artifact real-device QA and independent owner signing-key backup. Prior build evidence below does not verify these edits.
+- New catalog concern: assisted-pull-up/assisted-chin-up record assistance as ordinary kg; this contradicts the backlog boundary and makes kg x reps/maximum-load metrics ambiguous. Resolve cross-client semantics before stable release; preserve IDs and existing data.
+
 CURRENTTASK: 1.0.0-rc.2 source prepared (100 exercises, 17 templates); local validation passing, awaiting signed-candidate dispatch.
 
 2026-11-05 expansion: catalog 60 -> 100 (+40 rep-based kg x reps: 6 Peito, 7 Costas, 9 Pernas, 6 Ombros, 7 Braços, 5 Core; timed holds excluded per backlog). Routines 9 -> 17 (+PPL Empurrar/Puxar/Pernas and 5-day personalized: Dia 1 Pernas, Dia 2 Costas e bíceps, Dia 3 Peito e tríceps, Dia 4 Costas e bíceps B, Dia 5 Peito/tríceps e extras ombros+core). UI: smallest Android text 10sp -> 11sp (Metric 11->12sp). Version 1.0.0-rc.1/code4 -> 1.0.0-rc.2/code5.

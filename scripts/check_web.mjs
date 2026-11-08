@@ -4,13 +4,13 @@ import assert from 'node:assert/strict';import fs from 'node:fs/promises';
 const catalog=JSON.parse(await fs.readFile(new URL('../shared/catalog.json',import.meta.url),'utf8'));
 const templates=JSON.parse(await fs.readFile(new URL('../shared/routines.json',import.meta.url),'utf8'));
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||undefined,args:['--no-sandbox']});
-const url=process.env.ONEPUNCH_QA_URL||'http://127.0.0.1:8098';let checks=0;await fs.mkdir('/tmp/onepunch-qa',{recursive:true});
+const url=process.env.ONEPUNCH_QA_URL||'http://127.0.0.1:8098';let checks=0;const output=process.env.ONEPUNCH_QA_OUT||'/tmp/onepunch-qa';await fs.mkdir(output,{recursive:true});
 for(const width of [1440,1024,768,390,320]){
  const context=await browser.newContext({viewport:{width,height:1000},reducedMotion:'reduce'});const page=await context.newPage();page.setDefaultTimeout(10000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(url);await page.getByRole('heading',{name:'Vamos fazer acontecer.'}).waitFor();checks++;
  assert.equal(await page.locator('.week-count>strong').innerText(),'0');checks++;
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));checks++;
- await page.screenshot({path:`/tmp/onepunch-qa/home-${width}.png`,fullPage:true,animations:'disabled'});
+ await page.screenshot({path:`${output}/home-${width}.png`,fullPage:true,animations:'disabled'});
  const nav=page.getByRole('navigation',{name:width<=700?'Navegação mobile':'Navegação principal',exact:true});
  await nav.getByRole('button',{name:width<=700?'Treinos':'Meus treinos',exact:true}).click();
  await page.getByRole('button',{name:'Criar rotina',exact:true}).click();
@@ -39,7 +39,7 @@ for(const width of [1440,1024,768,390,320]){
  await page.getByRole('button',{name:'Adicionar série',exact:true}).click();
  assert.equal(await page.locator('.set-row').count(),4);checks++;
  await page.getByRole('button',{name:'Pular descanso',exact:true}).click();assert.equal(await page.getByRole('timer').count(),0);checks++;
- await page.screenshot({path:`/tmp/onepunch-qa/session-${width}.png`,fullPage:true,animations:'disabled'});
+ await page.screenshot({path:`${output}/session-${width}.png`,fullPage:true,animations:'disabled'});
  await page.getByRole('button',{name:'Finalizar treino',exact:true}).click();
  await page.getByRole('button',{name:'Salvar treino',exact:true}).click();
  await page.getByRole('heading',{name:'Cada treino conta.'}).waitFor();
@@ -49,7 +49,7 @@ for(const width of [1440,1024,768,390,320]){
  assert.match(await page.locator('dialog .summary-stats').innerText(),/205/);checks++;
  await page.getByRole('button',{name:'Fechar janela',exact:true}).click();
  if(width===1440){await page.getByRole('button',{name:'Sincronizar treinos',exact:true}).click();await page.getByRole('status').filter({hasText:'Tudo sincronizado'}).waitFor();checks++;const cached=await page.evaluate(async()=>{const names=await caches.keys();return(await Promise.all(names.map(async name=>(await(await caches.open(name)).keys()).map(request=>request.url)))).flat()});assert(!cached.some(x=>new URL(x).pathname.startsWith('/api/')));checks++;}
- await page.screenshot({path:`/tmp/onepunch-qa/history-${width}.png`,fullPage:true,animations:'disabled'});
+ await page.screenshot({path:`${output}/history-${width}.png`,fullPage:true,animations:'disabled'});
  await nav.getByRole('button',{name:'Exercícios',exact:true}).click();
  await page.getByRole('textbox',{name:'Buscar na biblioteca'}).fill('rosca');
  assert.equal(await page.locator('.exercise-card').count(),catalog.filter(e=>e.name.toLocaleLowerCase('pt-BR').includes('rosca')).length);checks++;
@@ -61,6 +61,26 @@ for(const width of [1440,1024,768,390,320]){
  await page.getByRole('button',{name:'Descartar este treino',exact:true}).click();await page.getByRole('button',{name:'Descartar treino',exact:true}).click();
  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('onepunch.workspace.v1')).active),null);checks++;
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));checks++;assert.deepEqual(errors,[]);checks++;
+ // Assistance stays visible in history without becoming lifted volume or a record.
+ await nav.getByRole('button',{name:'Exercícios',exact:true}).click();
+ await page.locator('.exercise-card').filter({has:page.getByRole('heading',{name:'Barra fixa assistida',exact:true})}).click();
+ await page.getByRole('button',{name:'Iniciar treino com este exercício'}).click();
+ await page.getByLabel('Assistência em kg, série 1, Barra fixa assistida',{exact:true}).fill('40,5');
+ await page.getByRole('button',{name:'Concluir série 1 de Barra fixa assistida',exact:true}).click();
+ assert.match(await page.locator('.validation-message').innerText(),/não no volume/);checks++;
+ assert.equal(await page.locator('.session-metrics b').nth(1).innerText(),'0');checks++;
+ await page.reload();await page.locator('.resume-card').click();
+ assert.equal(await page.getByLabel('Assistência em kg, série 1, Barra fixa assistida',{exact:true}).inputValue(),'40,5');checks++;
+ await page.getByRole('button',{name:'Finalizar treino',exact:true}).click();
+ assert.equal(await page.locator('dialog .summary-stats strong').last().innerText(),'0 kg');checks++;
+ await page.getByRole('button',{name:'Salvar treino',exact:true}).click();
+ const assisted=await page.evaluate(()=>JSON.parse(localStorage.getItem('onepunch.workspace.v1')).workouts.find(w=>w.sets.some(s=>s.exerciseId==='assisted-pull-up')));
+ assert.equal(assisted.sets[0].weight,40.5);checks++;
+ assert.equal(await page.locator('#progress-exercise option').filter({hasText:'Barra fixa assistida'}).count(),0);checks++;
+ await page.locator('.history-list .history-row').first().click();
+ assert.match(await page.locator('dialog .history-exercise').innerText(),/40,5 kg de assistência/);checks++;
+ assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));checks++;
+ assert.deepEqual(errors,[]);checks++;
  await context.close();
 }
 const c=await browser.newContext({viewport:{width:390,height:900}});const p=await c.newPage();await p.goto(url);await p.getByRole('button',{name:'Treino livre',exact:true}).click();const activeId=await p.evaluate(()=>JSON.parse(localStorage.getItem('onepunch.workspace.v1')).active.id);await p.getByRole('button',{name:'Voltar ao início'}).click();await p.getByRole('button',{name:'Sincronizar treinos'}).click();await p.getByRole('status').filter({hasText:'Tudo sincronizado'}).waitFor();
@@ -78,4 +98,32 @@ assert.deepEqual(syncErrors,[]);checks++;
 await p.unroute('**/api/sync');
 await p.getByRole('button',{name:'Sincronizar treinos'}).click();
 await p.getByRole('status').filter({hasText:'Tudo sincronizado'}).waitFor();checks++;
+// A structurally invalid successful response must not become persisted state.
+const beforeMalformed=await p.evaluate(()=>localStorage.getItem('onepunch.workspace.v1'));
+await p.route('**/api/sync',route=>route.fulfill({json:{routines:[{...synced.routines[0],name:null,updatedAt:Date.now()+10000}],workouts:[]}}));
+await p.getByRole('button',{name:'Sincronizar treinos'}).click();
+await p.getByRole('status').filter({hasText:'Não foi possível sincronizar.'}).waitFor();checks++;
+assert.equal(await p.evaluate(()=>localStorage.getItem('onepunch.workspace.v1')),beforeMalformed);checks++;
+assert.deepEqual(syncErrors,[]);checks++;
+await p.unroute('**/api/sync');
+const collision=await browser.newContext({viewport:{width:390,height:900}});
+const collisionPage=await collision.newPage();const collisionErrors=[];collisionPage.on('pageerror',e=>collisionErrors.push(e.message));
+const finished=synced.workouts[0];
+const collisionState={...synced,active:{...synced.active,id:finished.id,exercises:[...new Set(finished.sets.map(s=>s.exerciseId))].map(exerciseId=>({exerciseId,sets:1,reps:10,restSeconds:0})),sets:finished.sets}};
+const collisionRaw=JSON.stringify(collisionState);
+await collisionPage.addInitScript(raw=>localStorage.setItem('onepunch.workspace.v1',raw),collisionRaw);
+await collisionPage.goto(url);await collisionPage.locator('.resume-card').click();
+await collisionPage.getByRole('button',{name:'Finalizar treino',exact:true}).click();
+await collisionPage.getByRole('button',{name:'Salvar treino',exact:true}).click();
+await collisionPage.getByRole('status').filter({hasText:'já existe no histórico'}).waitFor();checks++;
+assert.equal(await collisionPage.evaluate(()=>localStorage.getItem('onepunch.workspace.v1')),collisionRaw);checks++;
+assert.equal(await collisionPage.getByRole('button',{name:'Continuar treinando',exact:true}).count(),1);checks++;
+assert.deepEqual(collisionErrors,[]);checks++;await collision.close();
+for(const invalid of ['',JSON.stringify({...synced,active:'broken'}),JSON.stringify({...synced,routines:[null]})]){
+ const context=await browser.newContext();const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.addInitScript(raw=>localStorage.setItem('onepunch.workspace.v1',raw),invalid);
+ await page.goto(url);await page.getByRole('heading',{name:'Seus dados precisam de atenção.'}).waitFor();checks++;
+ assert.equal(await page.evaluate(()=>localStorage.getItem('onepunch.workspace.v1')),invalid);checks++;
+ assert.deepEqual(errors,[]);checks++;await context.close();
+}
 await c.close();const broken=await browser.newContext();const recovery=await broken.newPage();await recovery.addInitScript(()=>localStorage.setItem('onepunch.workspace.v1','{invalid'));await recovery.goto(url);await recovery.getByRole('heading',{name:'Seus dados precisam de atenção.'}).waitFor();assert.equal(await recovery.evaluate(()=>localStorage.getItem('onepunch.workspace.v1')),'{invalid');checks++;await broken.close();await browser.close();console.log(`${checks} browser checks passed: 5 widths, routine creation, logging, rest timer, offline reload recovery, history, library, discard, and real Go API cross-client sync.`);

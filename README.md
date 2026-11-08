@@ -12,7 +12,7 @@ signing/upgrade work, device QA gates and delivery checklist.
 See [release operations](docs/RELEASE_OPERATIONS.md) for signed hosted candidates
 and exact-artifact promotion, and [readiness status](docs/RELEASE_STATUS.md) for
 the client capability inventory and open release blockers. The source is now a
-1.0.0-rc.1 candidate; 0.3.0 below remains the last published version.
+1.0.0-rc.2 candidate; its signed prerelease publication is being prepared.
 
 ## What works
 
@@ -37,6 +37,9 @@ the client capability inventory and open release blockers. The source is now a
   and offer saving a copy when the original routine changed during sync.
 - Start a routine or a free workout; add exercises/sets and log kg/reps.
 - Mark sets complete, see session volume and compare previous performance.
+  Assisted pull-ups/chin-ups record kg de assistência: their completed sets stay
+  in history, but assistance is excluded from lifted volume and highest-load
+  records. Existing values are preserved; corrected totals can decrease.
 - Timestamp-based rest timer, skip/+30 seconds, and local session recovery.
 - Native exercise menu: change rest for upcoming sets or remove an individual
   set with confirmation, without modifying the original routine.
@@ -54,6 +57,14 @@ the client capability inventory and open release blockers. The source is now a
 
 The initial state has no fabricated workouts, streaks or records. Templates are
 examples that the user can change; this version does not generate adaptive plans.
+
+## Ship the current signed prerelease
+
+With owner authorization and GitHub CLI installed, run
+`bash scripts/ship-prerelease.sh` from a clean committed release branch. It pushes
+the source, requests a fresh signed hosted build, waits for checked prerelease
+publication and verifies downloaded assets. It prompts for GitHub login if needed.
+See [release operations](docs/RELEASE_OPERATIONS.md) for the signing and QA gates.
 
 ## Try the already built versions
 
@@ -115,6 +126,33 @@ compilation. The SDK defaults to `build/local-tools/sdk`; set `ANDROID_HOME` and
 `JAVA_HOME` in the invoked script when using another installation. These scripts
 need systemd/cgroup v2; they stop rather than silently run without the cap.
 Run heavy checks serially. Existing hosted release workflows remain available.
+
+To run Android compilation/JVM tests, production web build, Go race tests and
+both browser suites in one capped host job:
+
+```sh
+sudo bash scripts/check-all-local.sh
+```
+
+Check installed tools first with `bash scripts/check-all-local.sh --preflight`;
+it lists all missing prerequisites without launching builds. On Fedora, the Go
+and C compiler packages are `golang` and `gcc`. JDK17 is available as
+`temurin-17-jdk` through Fedora's `adoptium-temurin-java-repository` package;
+the runner detects its standard installation paths.
+
+This requires host systemd access, Node 22/npm, Go 1.26, a C compiler, JDK17,
+SDK36/build-tools36 and network access for dependencies. It detects standard
+Debian/Fedora JDK17 paths and defaults to `/var/tmp/onepunch-android-sdk`.
+For custom tool paths, invoke `local-limited.sh` with `env JAVA_HOME=...`
+and `ANDROID_HOME=...` before `bash scripts/check-all-local.sh --inside`.
+Reports, source hashes, APK hash and screenshots are retained in a fresh
+`build/verification-*` directory, recorded in `build/latest-verification-path.txt`.
+Only a fully successful run writes `PASSED.txt`. If Android has already passed
+and a later dependency/browser step fails, retry the remaining checks with
+`sudo bash scripts/check-all-local.sh --web-only`; a successful partial job writes
+`WEB-PASSED.txt` and makes no new Android verification claim. Browser suites use separate
+disposable API files and isolated profiles. Android device UI QA is separate.
+A sandbox that denies systemd access cannot launch this host job.
 Compiler snapshots and caches use disk-backed Linux `/var/tmp`, avoiding both
 slow Windows-mounted cache I/O and this machine's RAM-backed `/tmp`.
 No physical-device installation or publication is performed by these checks.

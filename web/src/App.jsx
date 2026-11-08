@@ -40,6 +40,8 @@ import {
   readState,
   validSet,
   completedSets,
+  isAssisted,
+  loadUnit,
   volume,
   routineValid,
   latestSets,
@@ -457,7 +459,7 @@ function WorkoutDetail({ workout, onClose }) {
               <div key={s.id}>
                 <span>Série {i + 1}</span>
                 <strong>
-                  {fmt(s.weight)} kg × {s.reps}
+                  {fmt(s.weight)} {loadUnit(s.exerciseId)} × {s.reps}
                 </strong>
                 <Check size={15} />
               </div>
@@ -1201,7 +1203,7 @@ function App() {
                       <option value="">Escolher exercício</option>
                       {catalog
                         .filter((e) =>
-                          state.workouts.some((w) =>
+                          !isAssisted(e.id) && state.workouts.some((w) =>
                             w.sets.some((s) => s.exerciseId === e.id),
                           ),
                         )
@@ -1391,11 +1393,17 @@ function App() {
                           <X size={19} />
                         </button>
                       </div>
+                      {isAssisted(e.id) ? (
+                        <p className="validation-message">
+                          Registre kg de assistência da máquina. Estas séries contam no histórico,
+                          mas não no volume nem nos recordes de carga.
+                        </p>
+                      ) : null}
                       <div className="sets-table">
                         <div className="sets-table-head">
                           <span>SÉRIE</span>
                           <span>ANTERIOR</span>
-                          <span>KG</span>
+                          <span>{isAssisted(e.id) ? "ASSIST. KG" : "KG"}</span>
                           <span>REPS</span>
                           <span>FEITO</span>
                         </div>
@@ -1416,7 +1424,7 @@ function App() {
                               </span>
                               <label>
                                 <span className="sr-only">
-                                  Carga, série {i + 1}, {e.name}
+                                  {isAssisted(e.id) ? "Assistência em kg" : "Carga"}, série {i + 1}, {e.name}
                                 </span>
                                 <input
                                   inputMode="decimal"
@@ -1712,10 +1720,15 @@ function App() {
             className="button dark full"
             disabled={!completedSets(active).length}
             onClick={() => {
-              setState((s) => finishWorkout(s));
-              setModal(null);
-              setView("history");
-              setToast("Treino salvo. Bom trabalho!");
+              try {
+                const finished = finishWorkout(stateRef.current);
+                setState(finished);
+                setModal(null);
+                setView("history");
+                setToast("Treino salvo. Bom trabalho!");
+              } catch (error) {
+                setToast(String(error.message || error));
+              }
             }}
           >
             Salvar treino

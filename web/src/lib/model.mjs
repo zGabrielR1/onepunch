@@ -20,9 +20,13 @@ export const validSet = (set) =>
   number(set.reps) <= 1000;
 export const completedSets = (workout) =>
   (workout?.sets || []).filter((set) => set.done && validSet(set));
+// Stable catalog IDs: these values record machine assistance, never lifted kg.
+export const isAssisted = (exerciseId) =>
+  exerciseId === "assisted-pull-up" || exerciseId === "assisted-chin-up";
+export const loadUnit = (exerciseId) => isAssisted(exerciseId) ? "kg de assistência" : "kg";
 export const volume = (workout) =>
   Math.round(
-    completedSets(workout).reduce(
+    completedSets(workout).filter((set) => !isAssisted(set.exerciseId)).reduce(
       (sum, set) => sum + number(set.weight) * number(set.reps),
       0,
     ) * 100,
@@ -39,6 +43,7 @@ export const routineValid = (routine) =>
       Number.isInteger(+e.reps) &&
       +e.reps >= 1 &&
       +e.reps <= 1000 &&
+      Number.isInteger(+e.restSeconds) &&
       +e.restSeconds >= 0 &&
       +e.restSeconds <= 600,
   );
@@ -46,7 +51,7 @@ export const latestSets = (workouts, exerciseId) =>
   [...workouts]
     .sort((a, b) => b.endedAt - a.endedAt)
     .find((w) => completedSets(w).some((s) => s.exerciseId === exerciseId))
-    ?.sets.filter((s) => s.exerciseId === exerciseId && s.done) || [];
+    ?.sets.filter((s) => s.exerciseId === exerciseId && s.done && validSet(s)) || [];
 export function addExercise(active, exerciseId, spec = {}, workouts = []) {
   if (active.exercises.some((e) => e.exerciseId === exerciseId)) return active;
   const previous = latestSets(workouts, exerciseId);
@@ -106,6 +111,8 @@ export function toggleSet(active, setId, now = Date.now()) {
 }
 export function finishWorkout(state, now = Date.now()) {
   if (!state.active) return state;
+  if (state.workouts.some((workout) => workout.id === state.active.id))
+    throw Error("Este treino já existe no histórico. Seus dados locais foram preservados.");
   const sets = completedSets(state.active);
   if (!sets.length)
     throw Error("Conclua pelo menos uma série para salvar o treino.");
@@ -126,7 +133,7 @@ export function finishWorkout(state, now = Date.now()) {
   return {
     ...state,
     active: null,
-    workouts: [workout, ...state.workouts.filter((w) => w.id !== workout.id)],
+    workouts: [workout, ...state.workouts],
   };
 }
 export function mergeRecords(local, remote) {
@@ -158,7 +165,7 @@ export function mergeWorkouts(local, remote) {
   }
   return [...all.values()].sort((a, b) => b.endedAt - a.endedAt);
 }
-export const mergeSynced = (state, remote, now = Date.now()) => ({
+export const mergeSynced = (state, remote, now = Date.now()) => readableState({
   ...state,
   routines: mergeRecords(state.routines, remote.routines),
   workouts: mergeWorkouts(state.workouts, remote.workouts),
@@ -183,13 +190,38 @@ export function weekDays(workouts, now = Date.now()) {
   });
 }
 export function readState(raw, routines) {
-  if (!raw) return emptyState(routines);
-  const state = JSON.parse(raw);
+  if (raw == null) return emptyState(routines);
+  return readableState(JSON.parse(raw));
+}
+// Check the structure before render or a sync response can make it writable.
+// Input values intentionally remain strings, including unfinished local edits.
+function readableState(state) {
+  const record = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+  const text = (value) => typeof value === "string";
+  const input = (value) => text(value) || (typeof value === "number" && Number.isFinite(value));
+  const timestamp = (value) => Number.isSafeInteger(value) && value > 0;
+  const optionalText = (value) => value == null || text(value);
+  const specs = (values) => Array.isArray(values) && values.every((value) =>
+    record(value) && text(value.exerciseId) &&
+    [value.sets, value.reps, value.restSeconds].every(input));
+  const sets = (values) => Array.isArray(values) && values.every((value) =>
+    record(value) && text(value.id) && text(value.exerciseId) &&
+    input(value.weight) && input(value.reps) && typeof value.done === "boolean");
+  const session = (value) => record(value) && text(value.id) && text(value.title) &&
+    optionalText(value.routineId) && optionalText(value.note) && timestamp(value.startedAt) && sets(value.sets);
   if (
+    !record(state) ||
     state.version !== 1 ||
     !Array.isArray(state.routines) ||
     !Array.isArray(state.workouts) ||
-    !("active" in state)
+    !("active" in state) ||
+    !state.routines.every((value) => record(value) && text(value.id) && text(value.name) &&
+      optionalText(value.note) && specs(value.exercises) &&
+      (value.archived == null || typeof value.archived === "boolean")) ||
+    !state.workouts.every((value) => session(value) && timestamp(value.endedAt) && timestamp(value.updatedAt)) ||
+    !(state.active === null || (session(state.active) && specs(state.active.exercises) &&
+      (state.active.restUntil == null || timestamp(state.active.restUntil)))) ||
+    !(state.lastSyncedAt == null || timestamp(state.lastSyncedAt))
   )
     throw Error("Formato de dados locais não reconhecido.");
   return state;

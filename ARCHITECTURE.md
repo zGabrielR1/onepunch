@@ -36,8 +36,8 @@ set unchecks it. Routine sets range 1–20; rest intervals range 0–600 seconds
 
 Finishing copies only valid completed sets into immutable history, normalizes
 numeric values, clears active, and never saves an empty session. Session volume
-is sum(weight × reps); no predicted scores, progress or training outcomes are
-invented. Previous-set suggestions come exclusively from actual finished history.
+is sum(weight × reps) for lifted-load exercises; machine assistance is excluded.
+No predicted scores, progress or training outcomes are invented. Previous-set suggestions come exclusively from actual finished history.
 
 Native session progress counts actual set rows, not routine targets: valid done
 sets are completed; unchecked sets and invalid marked-done sets remain excluded.
@@ -63,6 +63,10 @@ editable during the new session. Storage and API formats remain version 1.
 The web stores JSON in localStorage `onepunch.workspace.v1`. Android stores its
 workspace in private SharedPreferences. Invalid saved data is preserved instead
 of auto-reset. Native writes check commit success before replacing UI state.
+Web loading checks nested record shapes and timer/sync timestamps before render;
+an existing empty string is unreadable, not an absent workspace. Successful sync
+responses must pass the same readability check before becoming UI/persisted state.
+These are structural checks, not a substitute for the API's complete validation.
 Browser storage-write failures show a persistent error. Data cleared by the OS or
 user is not silently recoverable unless it has been synced to the personal API.
 
@@ -85,6 +89,22 @@ it. Native exercise menus can manually start/restart the configured rest without
 completing sets; zero-second intervals disable manual start. Active timers allow
 30-second adjustments; shortening to zero clears the deadline, while extending
 an expired deadline starts 30 seconds from click time. This build does not schedule system alarms or promise background alerts.
+
+## Assisted-load compatibility
+
+The stable catalog IDs `assisted-pull-up` and `assisted-chin-up` record machine
+assistance in the existing weight field, labeled kg de assistência in both
+clients. Valid explicitly completed assisted sets remain in history, completed-set
+counts, previous-set suggestions, native replay, backup and sync. They contribute
+zero to lifted-volume totals and are excluded from highest-load records and
+native load/volume comparisons. No body weight or effective lifted load is inferred.
+
+This is a derived-metric correction, not a stored-data migration: IDs, raw values,
+finished records and version-1 payloads remain unchanged. Existing totals can
+therefore decrease after updating; older clients still include assistance in their
+metrics and should be rebuilt/updated together. The API stores raw values and
+requires no schema change. Future assisted catalog IDs require explicit matching
+classification in both domain helpers and regression coverage.
 
 ## Native backup and restore
 
@@ -147,8 +167,10 @@ The store validates catalog references, limits and completed sets. History IDs
 are immutable; a changed record under an existing ID produces 409. Routine
 conflicts use modification timestamps, not real-time collaborative editing.
 Client merge retains any local active workout and newer local routine edits.
-Web finished-history merge rejects differing content under an existing workout
-ID before applying any response records or sync metadata. Numeric load/repetition
+Both clients reject differing finished-history content under an existing workout
+ID before applying any response records or sync metadata. Android uses the same
+numeric-equivalence comparator for sync and backup restore. Finishing a colliding
+active ID rejects instead of replacing history. Numeric load/repetition
 representations are normalized for comparison; identical records retain the local
 copy. Sync conflicts surface as recoverable feedback without replacing local data.
 Native routine management supports archive/restore using the existing archived
@@ -189,13 +211,14 @@ rebuilds; changing the display brand preserves storage/application identity.
 
 ## Current verification boundary
 
-0.3.0 source 738a12b was compiled and verified on GitHub-hosted Ubuntu: 54 Android
-JVM tests, four Go race tests, 116 browser checks, web tests/build and APK signature
-verification passed. No compilation ran on the development PC. Native device UI
-testing remains separate and pending (docs/NATIVE_QA.md). Browser workflows use a
-real temporary Go API and isolated browser profiles, not fabricated production
-history. All UI artwork is original CSS/SVG/native vectors, with no copied assets
-from the reference apps.
+RC.2 development source (uncommitted changes based on cfdc351) passed local
+Android debug compilation and 77 JVM tests, plus 16 web tests, 13 release-tooling
+tests, production build, Go race checks and 233 browser assertions on 2026-11-08.
+The browser run used disposable real API data and isolated profiles; all 53 recorded
+source hashes matched at review. Both host jobs enforced 3 GiB/no swap. See
+`docs/qa/v1_0_0_rc_2_automated.json` for exact evidence and debug APK hash.
+Fresh signed-release candidate and exact-artifact physical-device QA are still
+required. Browser screenshots and JVM results are not Android device UI evidence.
 
 ## Unreleased native additions
 
@@ -205,5 +228,5 @@ comparisons use the two latest sessions containing valid completed sets for that
 exercise, with deterministic timestamp-tie ordering and factual differences only.
 Local workspace loading requires the version-1 envelope and explicit active field;
 malformed active data and invalid sync timestamps fail without replacing storage.
-Sync responses may still omit local-only fields. Native compilation/device QA for
-these additions remains pending; the 0.3.0 results above apply to released source.
+Sync responses may still omit local-only fields. Debug compilation/JVM checks for
+these additions passed in the 77-test run; exact signed-candidate device QA remains pending.

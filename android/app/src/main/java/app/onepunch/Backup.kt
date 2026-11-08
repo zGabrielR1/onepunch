@@ -147,17 +147,12 @@ fun decodeBackup(raw: String, knownExercises: Set<String>): WorkoutBackup {
     return WorkoutBackup(workspace, draft, exportedAt)
 }
 
-private fun comparableWorkout(value: Workout): Workout = value.copy(sets = value.sets.map {
-    it.copy(weight = numeric(it.weight)?.let { weight -> if (weight == 0.0) "0.0" else weight.toString() } ?: it.weight,
-        reps = it.reps.toIntOrNull()?.toString() ?: it.reps)
-})
-
 fun planBackupRestore(local: Workspace, localDraft: RoutineDraft?, backup: WorkoutBackup, now: Long = System.currentTimeMillis()): BackupRestorePlan {
     val workouts = local.workouts.associateBy { it.id }.toMutableMap()
     var addedWorkouts = 0
     backup.workspace.workouts.forEach { imported ->
         val current = workouts[imported.id]
-        require(current == null || comparableWorkout(current) == comparableWorkout(imported)) {
+        require(current == null || sameWorkoutContent(current, imported)) {
             "Um treino do arquivo tem o mesmo ID de um registro local, mas conteúdo diferente. Nada foi restaurado."
         }
         require(local.active?.id != imported.id) { "O arquivo conflita com o treino em andamento. Finalize-o antes de importar." }

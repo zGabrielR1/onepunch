@@ -1,6 +1,7 @@
 # Building and promoting 1.0
 
-The signed candidate and stable promotion workflows implement the packaging gates
+The signed candidate, optional signed-prerelease publication and stable promotion
+workflows implement the packaging gates
 in [the release plan](RELEASE_1_0_PLAN.md). Compilation runs on GitHub, never on
 the development PC. The existing Hosted prerelease workflow remains available
 for debug prereleases and refuses stable versions.
@@ -45,7 +46,9 @@ Keystore material is restored only under RUNNER_TEMP and removed at job end.
    RCs use `prerelease=true`; the eventual final `1.0.0` uses `false` and an
    Android versionCode higher than every distributed candidate.
 2. Run **Signed release candidate** (`candidate.yml`) on that source ref.
-   It never publishes. It runs release-variant JVM tests, web domain/build,
+   It does not publish by default. Leave `publish_prerelease=false` for a build-only
+   candidate; explicitly set it true only for an authorized prerelease shipment.
+   It runs release-variant JVM tests, web domain/build,
    Go race checks and real browser workflows, then packages a release APK and
    Linux API/web archive. The archive is extracted into a clean temporary
    directory and smoke-tested using disposable API storage.
@@ -56,6 +59,30 @@ Keystore material is restored only under RUNNER_TEMP and removed at job end.
    signing fingerprint, source SHA and workflow. Automated checks do not replace
    device QA. Perform the detailed [native checks](NATIVE_QA.md) on a separate
    testing machine/device using these exact artifacts.
+
+## Ship an authorized signed prerelease
+
+From the owner host terminal, with GitHub CLI installed:
+
+```sh
+bash scripts/ship-prerelease.sh
+```
+
+The command prompts for GitHub login if needed, requires a clean committed
+prerelease branch, verifies repository access and an unused tag, pushes the exact
+commit without force, and dispatches `candidate.yml` with
+`publish_prerelease=true`. It waits for the hosted build and publication, downloads
+the resulting release files and verifies checksums/source. No local compilation
+or private signing-key access occurs. Install GitHub CLI on Fedora with
+`sudo dnf install gh` if missing; run the shipping command as the owner, not sudo.
+
+Publication is a separate job that depends on successful signed-candidate checks.
+It downloads this run's exact verified files, checks source/version/signing/hashes
+and refuses occupied tags or stable versions. Its token has contents write and
+actions read; the build job retains read-only repository permissions. Existing
+release files/tags are never overwritten. Build-only candidate behavior remains
+the default. Device QA is explicitly pending in the prerelease metadata; stable
+promotion still requires exact-artifact device QA and independent key recovery.
 
 ## Upgrade from a debug APK
 
@@ -93,6 +120,6 @@ A display-name change uses shared branding and does not change storage identity.
    and certificate. Keep the manifest's original automated-only device-QA status;
    the attached `device-qa.json` supplies the later manual evidence for its APK hash.
 
-Do not publish while required QA is pending. A signing key, successful hosted
+Do not publish a stable release while required QA is pending. A signing key, successful hosted
 checks and actual device evidence remain external prerequisites; adding workflow
 code does not establish them.

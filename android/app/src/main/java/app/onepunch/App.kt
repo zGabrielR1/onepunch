@@ -838,7 +838,7 @@ fun OnepunchApp() {
                                         Eyebrow("MELHORES CARGAS REGISTRADAS")
                                         catalog
                                             .filter { e ->
-                                                visibleWorkouts.any { w ->
+                                                !isAssisted(e.id) && visibleWorkouts.any { w ->
                                                     completed(w.sets).any { it.exerciseId == e.id }
                                                 }
                                             }
@@ -875,7 +875,7 @@ fun OnepunchApp() {
                                 item {
                                     Header(
                                         "Treino em andamento.",
-                                        "Registre a carga total utilizada. Peso corporal? Use 0 kg.",
+                                        "Registre a carga total utilizada; sem carga adicional, use 0 kg. Em máquinas assistidas, registre os kg de assistência.",
                                     )
                                 }
                                 item {
@@ -1085,7 +1085,7 @@ fun OnepunchApp() {
                                                 modifier = Modifier.width(28.dp),
                                             )
                                             Text(
-                                                "KG",
+                                                if (isAssisted(e.id)) "ASSIST. KG" else "KG",
                                                 fontSize = 12.sp,
                                                 color = Muted,
                                                 modifier = Modifier.weight(1f),
@@ -1098,13 +1098,17 @@ fun OnepunchApp() {
                                             )
                                             Spacer(Modifier.width(44.dp))
                                         }
+                                        if (isAssisted(e.id)) Text(
+                                            "Registre kg de assistência da máquina. Estas séries contam no histórico, mas não no volume nem nos recordes de carga.",
+                                            color = Muted, fontSize = 12.sp,
+                                        )
                                         active.sets
                                             .filter { it.exerciseId == e.id }
                                             .forEachIndexed { index, set ->
                                                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                                     previous.getOrNull(index)?.let { last ->
                                                         Text(
-                                                            "Série ${index + 1} · anterior: ${last.weight} kg × ${last.reps}",
+                                                            "Série ${index + 1} · anterior: ${last.weight} ${loadUnit(e.id)} × ${last.reps}",
                                                             fontSize = 12.sp,
                                                             color = Muted,
                                                         )
@@ -1142,7 +1146,7 @@ fun OnepunchApp() {
                                                             modifier =
                                                                 Modifier.weight(1f).semantics {
                                                                     contentDescription =
-                                                                        "Carga, série ${index + 1}, ${e.name}"
+                                                                        "${if (isAssisted(e.id)) "Assistência em kg" else "Carga"}, série ${index + 1}, ${e.name}"
                                                                 },
                                                             keyboardOptions =
                                                                 KeyboardOptions(
@@ -1632,7 +1636,7 @@ fun OnepunchApp() {
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                     ) {
                                         Text("Série ${index + 1}", color = Muted)
-                                        Text("${fmt(numeric(set.weight) ?: 0.0)} kg × ${set.reps}")
+                                        Text("${fmt(numeric(set.weight) ?: 0.0)} ${loadUnit(set.exerciseId)} × ${set.reps}")
                                     }
                                 }
                             }
@@ -1745,6 +1749,8 @@ fun OnepunchApp() {
                                         syncOpen = false
                                         snackbar.showSnackbar("Tudo sincronizado.")
                                     }
+                                } catch (e: WorkoutHistoryConflictException) {
+                                    snackbar.showSnackbar(requireNotNull(e.message))
                                 } catch (e: Exception) {
                                     snackbar.showSnackbar(
                                         "Servidor indisponível. Seus treinos continuam salvos aqui.",
@@ -1910,7 +1916,7 @@ private fun WorkoutFinishReview(
                     exercise.includedSets.forEachIndexed { index, set ->
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text("Série ${numbers[set.id] ?: index + 1}", color = Muted, fontSize = 13.sp)
-                            Text("${fmt(numeric(set.weight) ?: 0.0)} kg × ${set.reps}", fontSize = 13.sp)
+                            Text("${fmt(numeric(set.weight) ?: 0.0)} ${loadUnit(set.exerciseId)} × ${set.reps}", fontSize = 13.sp)
                         }
                     }
                     if (exercise.excludedCount > 0)
@@ -1985,18 +1991,18 @@ private fun ExerciseDetails(
                         Eyebrow("SEUS REGISTROS NESTE EXERCÍCIO")
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Metric(history.size.toString(), "sessões", Modifier.weight(1f))
-                            Metric(
+                            if (!isAssisted(exercise.id)) Metric(
                                 fmt(history.maxOf { session -> session.sets.maxOf { numeric(it.weight) ?: 0.0 } }),
                                 "kg · maior carga",
                                 Modifier.weight(1f),
                             )
                         }
-                        Metric(
+                        if (!isAssisted(exercise.id)) Metric(
                             fmt(history.maxOf { volume(it.sets) }),
                             "kg de volume · maior numa sessão",
                         )
                         Text(
-                            "Valores de séries concluídas e salvas. Volume = carga × repetições.",
+                            if (isAssisted(exercise.id)) "Valores em kg de assistência da máquina. Séries excluídas do volume e dos recordes de carga." else "Valores de séries concluídas e salvas. Volume = carga × repetições.",
                             color = Muted,
                             fontSize = 12.sp,
                         )
@@ -2042,10 +2048,10 @@ private fun ExerciseDetails(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
                                 Text("Série ${index + 1}", color = Muted, fontSize = 13.sp)
-                                Text("${fmt(numeric(set.weight) ?: 0.0)} kg × ${set.reps}", fontSize = 13.sp)
+                                Text("${fmt(numeric(set.weight) ?: 0.0)} ${loadUnit(set.exerciseId)} × ${set.reps}", fontSize = 13.sp)
                             }
                         }
-                        Text("${fmt(volume(session.sets))} kg de volume", color = Muted, fontSize = 12.sp)
+                        if (!isAssisted(exercise.id)) Text("${fmt(volume(session.sets))} kg de volume", color = Muted, fontSize = 12.sp)
                     }
                 }
             }

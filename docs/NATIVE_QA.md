@@ -302,3 +302,27 @@ Record device/OS, build result, JVM test result and device findings separately.
 - In a disposable test profile, use malformed local version/active/sync timestamp
   fields and confirm loading is blocked while original preferences are preserved.
   Confirm normal local recovery, backup restore and versionless API sync still work.
+
+## Assisted-load correction — pending on the next exact candidate
+
+On disposable data, log one assisted pull-up and one assisted chin-up with nonzero
+assistance. Verify explicit assistance input/accessibility labels, previous-value
+and history units, persistence across restart, completion count, rest timer,
+finish preview/save agreement and unchecked replay. Assistance-only volume must
+be zero; a mixed session must include only ordinary lifted kg × reps. Neither
+assisted exercise should appear in highest-load records or load/volume comparison.
+Verify long assistance labels on a narrow phone with enlarged fonts. Export, sync
+and restore must preserve the raw assistance values and IDs. Existing totals may
+decrease after updating because assistance is excluded; do not rewrite history.
+These scenarios have not yet been executed for this source.
+
+## Immutable-history hardening — pending on the next exact candidate
+
+With disposable data and a controlled test API, return a changed workout under a
+saved ID at older, equal and newer timestamps, together with a new routine and
+workout. Expect a specific history conflict, no local merge, unchanged sync time
+and preserved active inputs. Repeat with an identical numeric-equivalent record:
+expect successful, idempotent sync and preserved active state. Test a recovered
+active/history ID collision: finish must show an error and retain the review,
+active inputs and original history. Export and compare the records before/after.
+These scenarios and the four new JVM regressions have not yet been executed.

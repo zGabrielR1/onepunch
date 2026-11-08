@@ -1,3 +1,75 @@
+# 2026-11-08 — authorized signed-prerelease shipment preparation
+
+- Owner explicitly requested building/shipping a GitHub release. Current version remains RC.2/code5; stable device/key-recovery gates are not bypassed.
+- Added opt-in signed-prerelease publication to candidate.yml, default false. Separate write-permission job requires successful candidate verification, downloads this run's files, validates version/source/owner certificate/checksums and unused tag, and publishes exact signed files. Stable version settings are rejected; existing tags/releases are never replaced.
+- Added check_prerelease.py and eight trust-boundary tests (stable refusal, identity/source/variant/certificate, artifact tampering, checksum completeness/paths and occupied/unknown tags). All21 release-tooling tests pass. Workflow YAML parses and shipping/local runner shell syntax pass. Existing product source and prior local automation remain unchanged.
+- Added owner-host shipping command: GitHub CLI authentication, clean-source check, non-force push to explicit repository, dispatch/wait signed candidate with publication, download/checksum/source verification. No credentials/private keys are printed or stored in source.
+- Direct GitHub API lacks credential helper; SSH has host-config permission issues and explicit-config attempt cannot resolve github.com. Plugin-management discovery returned no usable GitHub connection. Actual hosted execution/publication remains pending host invocation; no release URL is claimed.
+
+# 2026-11-08 — development automated gates complete
+
+- Read successful host reports from build/verification-sZwVOAeV: WEB-PASSED.txt, 181 workflow browser checks, 52 catalog/layout checks and Go race pass. Parsed light/release logs confirm 16 web tests and 13 release-tooling tests; production build passed. Overall host systemd run exited successfully, peak 1.6G, zero swap under 3 GiB cap.
+- Independently rehashed all 53 recorded source files: no differences. Rechecked native XML: 77 tests with zero failures/errors/skips, debug APK SHA256 44ddfeb14d870e55b6b452d2257fbe74dbbcd017664d688fc42a8906dcc59f94. Native and web evidence are from separate capped runs.
+- Reviewed large-text-session-320.png and picker-320.png: controls/no-results feedback remain visible without horizontal clipping in these browser states. This is not Android UI evidence.
+- Added durable docs/qa/v1_0_0_rc_2_automated.json with hashes/results/remaining gates; reconciled release readiness and RC.2 notes so completed automation is no longer listed as pending.
+- Fresh signed RC.2 candidate, exact-artifact real-device QA and independent key backup remain open. Source still uncommitted on cfdc351; no publication or installation.
+
+# 2026-11-08 — production web build passed; service cache fix
+
+- Read host run build/verification-RaVOXQtL: web production build passed (Vite7.3.7, 1583 modules); owner output confirms 16 web tests and 13 release regressions passed. Job stopped before Go compilation because a systemd environment without HOME/XDG_CACHE_HOME could not infer GOCACHE.
+- Fixed runner to explicitly configure Go build/module paths, npm cache and XDG cache under ignored build/local-tools. TMPDIR now uses the disk-backed /var/tmp job scratch directory. No HOME override or login environment dependency.
+- Verified with HOME/XDG_CACHE_HOME removed that go env successfully resolves GOCACHE/GOPATH/GOMODCACHE from these explicit settings; shell syntax and whitespace checks pass. Actual Go race/browser execution remains pending; prior Android77-test pass is separate.
+
+# 2026-11-08 — Android verification passed; dependency download interrupted
+
+- Owner's capped host run completed assembleDebug and testDebugUnitTest successfully in 5m2s. Independently parsed local JUnit XML: 14 files, 77 tests, zero failures/errors/skips, including the two assisted-load and four history-integrity regressions. These native changes now have compilation/JVM evidence, not device UI evidence.
+- Verified debug APK SHA-256: 44ddfeb14d870e55b6b452d2257fbe74dbbcd017664d688fc42a8906dcc59f94 (18,432,167 bytes). Run reports at build/verification-XDpBtAva; root-private directory prevents inspecting its other logs from this shell, while copied native XML/APK are readable.
+- npm ci then failed with network read ETIMEDOUT. Overall run failed; web build/Go/browser results remain pending. Host systemd reported peak 3G and zero swap.
+- Added --web-only mode to retry remaining checks without repeating Android; separate WEB-PASSED.txt avoids implying a fresh native run. Added bounded npm network retries and reduced download concurrency; genuine connectivity failures still stop the job. New report directories are returned to project-owner ownership on exit.
+- Shell syntax checks pass; no device installation or publication performed.
+
+# 2026-11-08 — host runner reached preflight
+
+- Owner's host output confirms the systemd memory/no-swap cap is working. Job failed before tests at missing Go; this is now a toolchain prerequisite issue on the host.
+- Verified preflight also lacks JDK17 and a C compiler. Updated the runner to report all missing items together, detect Fedora's Temurin17 paths and provide --preflight without compilation/cgroup launch.
+- Shell syntax passes; actual --preflight correctly returns Go/JDK17/C-compiler missing. SDK36/build-tools36 detected. No dependencies installed and no Android/browser run claimed.
+
+# 2026-11-08 — main-machine execution preflight and capped runner
+
+- Owner explicitly authorized Android/browser execution now. Rechecked environment: Android SDK36 and cached Chromium exist; shell runs with a read-only host filesystem outside writable roots. Both system and user systemd bus access return Operation not permitted and cgroup delegation is not writable. Main-machine presence has not removed session confinement.
+- Prepared scripts/check-all-local.sh for host execution using the existing verified 3 GiB/no-swap cap. Runs Android build/JVM, web build, Go race and both browser suites serially; isolates each API fixture and selects a free loopback port, cleans up server processes, retains logs/XML/source hashes/APK hash/screenshots. Installs pinned Playwright in disk-backed scratch; no OS package installation, device installation or publication.
+- Browser workflow screenshots now respect ONEPUNCH_QA_OUT, keeping each host run together. Runner and browser harness syntax pass. Actual runner attempt fails at systemd before heavy work; no new build or runtime pass is claimed.
+- Host command: sudo bash scripts/check-all-local.sh. Requires Node22/npm, Go1.26/C compiler, JDK17 and SDK36/build-tools36. Default SDK matches this host. Custom tool environments can be supplied through local-limited.sh's command arguments.
+
+# 2026-11-08 — immutable Android history and readable web state
+
+- Found Android sync still replaced finished history by timestamp and finish could replace a colliding ID. Both now reject conflicts without replacing local state. Identical numeric-equivalent history keeps its local object and merges idempotently; routine timestamp merging and active-state retention remain unchanged.
+- Extracted backup restore's content-equivalence rule into a shared history helper, retaining decimal comma, signed-zero and integer-string normalization. Sync has a typed history-conflict error with explicit UI feedback; finish uses the existing error-retaining review flow.
+- Added four JVM tests for older/equal/newer conflict rejection without local mutations, numeric repeated sync, changed fields/set ordering and finish collisions. Tests remain unexecuted pending capped/hosted native compilation.
+- Web readState no longer treats an unreadable empty string as an absent key. Nested routine/session/set shapes and timer/sync metadata are checked before rendering or merging sync responses; malformed records reach recovery without writable state. Unfinished values, empty active titles and timer deadlines remain untouched.
+- Added three web regressions; added 16 browser assertions for malformed sync rejection, finish collisions, and empty/malformed storage preservation with no page errors. Browser assertions are syntax-checked only.
+- Passed lightweight shared/domain validation, all 13 release-tooling tests, JS syntax, release config and whitespace checks. No heavy jobs rerun: the previously verified systemd sandbox restriction persists. No publication, installation, hosted dispatch or version change.
+
+# 2026-11-08 — assisted-load semantics
+
+- Resolved R6 in source: both domain implementations classify the two stable assisted exercise IDs, exclude assistance from lifted volume and highest-load UI, and retain the raw records. Native exercise comparisons are suppressed for assistance; completed sets/history/prefills/replay remain available.
+- Input/accessibility, previous values, history and native finish-review labels distinguish kg de assistência. Catalog descriptions explain the metric exclusion. No body-weight estimate, ID change or data migration.
+- Added web domain coverage for assistance-only and mixed volume, persistence, weekly counts, finish and unchecked prefills; two native JVM cases cover review/replay, raw history and comparison exclusion.
+- Added 45 browser assertions across five widths for input labels, zero assistance volume, reload persistence, finish preview, stored values, record exclusion, history units, overflow and page errors. Harness syntax checked, browser execution pending.
+- Repeated capped-launcher attempt fails before execution because systemd bus access is denied. No heavy checks were run without the cap. Android compilation/JVM, production/browser and exact signed-candidate QA are pending; historical evidence is not reused.
+- Updated architecture compatibility notes, README, release notes and defect ledger. Version stays RC.2/code5; no publication or device installation.
+
+# 2026-11-08 — release hardening continuation
+
+- Recovered RC.2 source and prior validation evidence. No new version or release created.
+- Web latestSets now filters invalid completed rows as well as selecting a valid historical session; zero-kg valid rows remain usable and prefills remain unchecked.
+- Web routine validation requires integer rest seconds, matching the shared/API contract.
+- Finishing an active workout whose ID is already in history rejects without modifying either record. UI catches validation before scheduling React state replacement and retains the finish dialog/session on rejection.
+- Added three domain regressions covering mixed invalid history, API-compatible rest intervals, and immutable-history collision with unchanged state.
+- Passed dependency-free light check (100 exercises, 17 templates; both domain/catalog test files), 13 release-tooling regressions, version consistency and whitespace validation.
+- Capped launcher could not connect to the systemd bus in this sandbox. Heavy build/browser/native checks remain pending for this source; historical RC.2 results are not reused. No hosted dispatch, publication or installation.
+- Found unresolved assisted-load catalog semantics (assisted-pull-up and assisted-chin-up): assistance is currently counted as ordinary load. Added release ledger item R6; cross-client semantics need resolution while preserving stable IDs and existing data.
+
 # Progress
 
 ## 2026-11-05 — 100 exercises, 17 templates, 1.0.0-rc.2 local validation

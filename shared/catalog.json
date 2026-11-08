@@ -473,14 +473,14 @@
     "name": "Barra fixa assistida",
     "muscle": "Costas",
     "equipment": "Máquina",
-    "description": "Registre a carga de assistência indicada na máquina utilizada."
+    "description": "Registre os kg de assistência indicados na máquina, não a carga levantada. As séries ficam no histórico, mas não entram no volume nem nos recordes de carga."
   },
   {
     "id": "assisted-chin-up",
     "name": "Queixada assistida",
     "muscle": "Costas",
     "equipment": "Máquina",
-    "description": "Registre a carga de assistência indicada na máquina utilizada."
+    "description": "Registre os kg de assistência indicados na máquina, não a carga levantada. As séries ficam no histórico, mas não entram no volume nem nos recordes de carga."
   },
   {
     "id": "one-arm-pulldown",

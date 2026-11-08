@@ -7,10 +7,15 @@ import {
   finishWorkout,
   validSet,
   volume,
+  completedSets,
   mergeSynced,
   readState,
   weekDays,
   addExercise,
+  latestSets,
+  routineValid,
+  isAssisted,
+  loadUnit,
 } from "./model.mjs";
 const routine = {
   id: "r",
@@ -75,6 +80,110 @@ test("previous performance prefills a new session without marking sets complete"
     1,
   );
   assert.throws(() => readState("{broken", []));
+});
+
+test("previous performance excludes invalid completed rows and newer invalid-only sessions", () => {
+  const valid = { id: "valid", exerciseId: "squat", weight: "0", reps: "12", done: true };
+  const invalid = { ...valid, id: "invalid", weight: "" };
+  const history = [
+    { endedAt: 3000, sets: [invalid] },
+    { endedAt: 2000, sets: [invalid, valid, { ...valid, id: "pending", done: false }] },
+  ];
+  assert.deepEqual(latestSets(history, "squat"), [valid]);
+  const next = startWorkout(routine, history, 4000);
+  assert.equal(next.sets[0].weight, "0");
+  assert.equal(next.sets[0].reps, "12");
+  assert.equal(next.sets[0].done, false);
+  assert.equal(next.sets[1].weight, "");
+});
+
+test("routine rest intervals use whole seconds compatible with the API", () => {
+  for (const restSeconds of [0, 90, 600, "90"])
+    assert.equal(routineValid({ ...routine, exercises: [{ ...routine.exercises[0], restSeconds }] }), true);
+  for (const restSeconds of [-1, 0.5, 90.5, 601, NaN, Infinity])
+    assert.equal(routineValid({ ...routine, exercises: [{ ...routine.exercises[0], restSeconds }] }), false);
+});
+
+test("finishing a recovered active ID cannot replace immutable history", () => {
+  const state = finishedFixture();
+  state.active = startWorkout(routine, state.workouts, 4000);
+  state.active.id = state.workouts[0].id;
+  state.active.sets[0].weight = "50";
+  state.active = toggleSet(state.active, state.active.sets[0].id, 5000);
+  const before = structuredClone(state);
+  assert.throws(() => finishWorkout(state, 6000), /já existe no histórico/);
+  assert.deepEqual(state, before);
+});
+
+test("assistance stays in history and prefills but never contributes lifted volume", () => {
+  for (const exerciseId of ["assisted-pull-up", "assisted-chin-up"]) {
+    assert.equal(isAssisted(exerciseId), true);
+    assert.equal(loadUnit(exerciseId), "kg de assistência");
+    const assistedRoutine = { ...routine, exercises: [{ ...routine.exercises[0], exerciseId }] };
+    let active = startWorkout(assistedRoutine, [], 1000);
+    active.sets[0].weight = "40,5";
+    active = toggleSet(active, active.sets[0].id, 2000);
+    assert.equal(completedSets(active).length, 1);
+    assert.equal(volume(active), 0);
+    const state = finishWorkout({ ...emptyState([]), active }, 3000);
+    const restored = readState(JSON.stringify(state), []);
+    assert.equal(restored.workouts[0].sets[0].weight, 40.5);
+    assert.equal(volume(restored.workouts[0]), 0);
+    assert.equal(weekDays(restored.workouts, 3000).reduce((n, day) => n + day.count, 0), 1);
+    assert.equal(weekDays(restored.workouts, 3000).reduce((n, day) => n + day.volume, 0), 0);
+    const next = startWorkout(assistedRoutine, restored.workouts, 4000);
+    assert.equal(next.sets[0].weight, "40.5");
+    assert.equal(next.sets[0].done, false);
+    const mixed = { sets: [...restored.workouts[0].sets, { id: "lifted", exerciseId: "squat", weight: "20,5", reps: "10", done: true }] };
+    assert.equal(volume(mixed), 205);
+  }
+  assert.equal(isAssisted("pull-up"), false);
+  assert.equal(loadUnit("pull-up"), "kg");
+});
+
+test("unreadable nested local records reject before they can become writable UI state", () => {
+  const state = finishedFixture();
+  state.active = startWorkout(routine, [], 4000);
+  const malformed = [
+    null, [], {}, { ...state, active: "broken" }, { ...state, active: {} },
+    { ...state, active: { ...state.active, sets: null } },
+    { ...state, active: { ...state.active, exercises: [null] } },
+    { ...state, active: { ...state.active, restUntil: "90000" } },
+    { ...state, routines: [null] }, { ...state, routines: [{ ...routine, name: null }] },
+    { ...state, workouts: [{ ...state.workouts[0], sets: [null] }] },
+    { ...state, workouts: [{ ...state.workouts[0], title: 123 }] },
+    { ...state, lastSyncedAt: -1 }, { ...state, lastSyncedAt: "5000" },
+  ];
+  for (const value of malformed) {
+    const raw = JSON.stringify(value);
+    assert.throws(() => readState(raw, []), /Formato de dados locais/);
+    assert.equal(JSON.stringify(value), raw);
+  }
+  assert.throws(() => readState("", []));
+  assert.deepEqual(readState(null, [routine]), emptyState([routine]));
+});
+
+test("local recovery keeps unfinished inputs and timer deadlines without normalization", () => {
+  const state = finishedFixture();
+  state.active = startWorkout(routine, [], 4000);
+  state.active.title = "";
+  state.active.sets[0].weight = "20,";
+  state.active.sets[0].reps = "";
+  state.active.restUntil = 95000;
+  assert.deepEqual(readState(JSON.stringify(state), []), state);
+});
+
+test("malformed nested sync records cannot poison the local workspace", () => {
+  const state = finishedFixture();
+  const before = structuredClone(state);
+  for (const remote of [
+    { routines: [{ ...routine, name: null, updatedAt: 10000 }], workouts: [] },
+    { routines: [], workouts: [{ ...state.workouts[0], id: "remote", title: 123 }] },
+    { routines: [], workouts: [{ ...state.workouts[0], id: "remote", sets: [null] }] },
+  ]) {
+    assert.throws(() => mergeSynced(state, remote, 10000));
+    assert.deepEqual(state, before);
+  }
 });
 
 function finishedFixture() {

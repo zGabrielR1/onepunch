@@ -2,6 +2,11 @@ name: Signed release candidate
 
 on:
   workflow_dispatch:
+    inputs:
+      publish_prerelease:
+        description: Publish verified signed files as a prerelease (device QA pending)
+        type: boolean
+        default: false
 
 concurrency:
   group: onepunch-signed-candidate
@@ -131,3 +136,36 @@ jobs:
       - name: Remove temporary signing key
         if: always()
         run: python -c "from pathlib import Path; Path('$RUNNER_TEMP/onepunch-release.jks').unlink(missing_ok=True)"
+
+  publish-prerelease:
+    if: inputs.publish_prerelease
+    needs: candidate
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Validate prerelease identity
+        run: python3 scripts/release_config.py >> "$GITHUB_ENV"
+      - name: Download this run's verified signed files
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "onepunch-signed-candidate-$GITHUB_RUN_ID" --dir build/publish
+      - name: Verify exact signed candidate files
+        env:
+          ONEPUNCH_CERT_SHA256: ${{ secrets.ONEPUNCH_CERT_SHA256 }}
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/check_prerelease.py build/publish
+      - name: Publish checked signed prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" --prerelease --title "$RELEASE_TITLE" \
+            --notes-file "$RELEASE_NOTES" \
+            build/publish/*.apk build/publish/*.tar.gz \
+            build/publish/verification.json build/publish/apk-signature.txt \
+            build/publish/apk-badging.txt build/publish/SHA256SUMS.txt

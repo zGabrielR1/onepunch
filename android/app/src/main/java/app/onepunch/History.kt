@@ -1,5 +1,21 @@
 package app.onepunch
 
+class WorkoutHistoryConflictException : IllegalArgumentException(
+    "Conflito no histórico: um treino já salvo tem conteúdo diferente. Seus dados locais foram preservados.",
+)
+
+// Shared by sync and backup restore. Preserve local representations of identical
+// records, accepting decimal commas, zero signs and integer repetition strings.
+fun sameWorkoutContent(first: Workout, second: Workout): Boolean {
+    fun comparable(value: Workout): Workout = value.copy(sets = value.sets.map {
+        it.copy(
+            weight = numeric(it.weight)?.let { weight -> if (weight == 0.0) "0.0" else weight.toString() } ?: it.weight,
+            reps = it.reps.toIntOrNull()?.toString() ?: it.reps,
+        )
+    })
+    return comparable(first) == comparable(second)
+}
+
 fun filterWorkoutHistory(
     workouts: List<Workout>, catalog: List<Exercise>, query: String = "", from: Long? = null, until: Long? = null,
 ): List<Workout> {
@@ -73,6 +89,8 @@ data class ExerciseSessionComparison(
 
 /** Raw differences, never a score or claim about training outcomes. */
 fun compareExerciseSessions(workouts: List<Workout>, exerciseId: String): ExerciseSessionComparison? {
+    // Assistance is not lifted load; retain the raw session rows without load rankings.
+    if (isAssisted(exerciseId)) return null
     // Timestamp ties use persisted metadata so sync/list ordering cannot flip the comparison.
     val sessions = exerciseHistory(workouts, exerciseId).sortedWith(
         compareByDescending<Workout> { it.endedAt }.thenByDescending { it.startedAt }.thenBy { it.id },

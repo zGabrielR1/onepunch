@@ -77,9 +77,16 @@ fun validSet(set: WorkoutSet): Boolean {
 
 fun completed(sets: List<WorkoutSet>) = sets.filter { it.done && validSet(it) }
 
+// Stable catalog IDs: these values record machine assistance, never lifted kg.
+fun isAssisted(exerciseId: String): Boolean =
+    exerciseId == "assisted-pull-up" || exerciseId == "assisted-chin-up"
+
+fun loadUnit(exerciseId: String): String = if (isAssisted(exerciseId)) "kg de assistência" else "kg"
+
 fun volume(sets: List<WorkoutSet>): Double =
     round(
-        completed(sets).sumOf { (numeric(it.weight) ?: 0.0) * (it.reps.toIntOrNull() ?: 0) } * 100,
+        completed(sets).filterNot { isAssisted(it.exerciseId) }
+            .sumOf { (numeric(it.weight) ?: 0.0) * (it.reps.toIntOrNull() ?: 0) } * 100,
     ) / 100
 
 fun latestSets(workouts: List<Workout>, exerciseId: String) =
@@ -130,6 +137,9 @@ fun toggleSet(
 
 fun finishWorkout(state: Workspace, now: Long = System.currentTimeMillis()): Workspace {
     val active = state.active ?: return state
+    require(state.workouts.none { it.id == active.id }) {
+        "Este treino já existe no histórico. Seus dados locais foram preservados."
+    }
     val sets = reviewWorkout(active).includedSets
     require(sets.isNotEmpty()) { "Conclua ao menos uma série para salvar." }
     require(workoutTitleValid(active.title)) { "Dê um nome ao treino antes de salvar." }
@@ -146,7 +156,7 @@ fun finishWorkout(state: Workspace, now: Long = System.currentTimeMillis()): Wor
         )
     return state.copy(
         active = null,
-        workouts = listOf(workout) + state.workouts.filterNot { it.id == workout.id },
+        workouts = listOf(workout) + state.workouts,
     )
 }
 
@@ -161,7 +171,9 @@ fun mergeWorkspace(
     }
     val workouts = local.workouts.associateBy { it.id }.toMutableMap()
     remote.workouts.forEach {
-        if ((workouts[it.id]?.updatedAt ?: 0) < it.updatedAt) workouts[it.id] = it
+        val current = workouts[it.id]
+        if (current != null && !sameWorkoutContent(current, it)) throw WorkoutHistoryConflictException()
+        if (current == null) workouts[it.id] = it
     }
     return local.copy(
         routines = routines.values.toList(),
