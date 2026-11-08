@@ -1,3 +1,17 @@
+# 2026-11-08 — RC.3 web rest controls
+
+RC.3/code6 prepared: web manual rest start/restart, −30-second adjustment, expired-deadline extension correction and wrapping narrow-screen controls. Pure domain preserves inputs/sets/history; browser harness adds 45 assertions at five widths for adjustments, persistence and layout. Light checks pass 17 tests; 21 release-tooling tests pass; JS syntax and release identity pass. Signed hosted verification pending; no RC.3 publication/device installation. RC.2 shipment evidence retained below.
+
+# 2026-11-08 — signed RC.2 prerelease shipped
+
+2026-11-08: Signed RC.2 prerelease published and downloaded files verified.
+Source: 2d6cc0c1a92d9f7b4784173f3359243d65c51cec; run 42514502860.
+Release: https://github.com/zGabrielR1/onepunch/releases/tag/v1.0.0-rc.2
+Hosted signed release build, 77 JVM tests (zero failures/errors/skips), 21 release-tooling tests, web checks/build, four Go race tests, 181 browser workflow assertions, certificate/non-debuggable identity and extracted Linux-bundle smoke checks passed. Publication job passed; local download checksums and source/variant/prerelease identity passed.
+Files: build/published-v1.0.0-rc.2-42514502860/.
+APK SHA-256: 00e05487425e86aea3ccbfe98ad5e365c813eb71d54cc26a57f1f09679f68732.
+Next: exact-artifact physical-device QA in docs/qa/v1_0_0_rc_2.json and independent owner signing-key backup confirmation before stable promotion. No device installation or stable publication performed.
+
 # 2026-11-08 — authorized signed-prerelease shipment preparation
 
 - Owner explicitly requested building/shipping a GitHub release. Current version remains RC.2/code5; stable device/key-recovery gates are not bypassed.

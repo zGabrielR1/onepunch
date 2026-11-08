@@ -1639,6 +1639,7 @@ a {
 }
 .rest-timer {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 14px;
   padding: 20px;
@@ -2872,5 +2873,19 @@ a {
 @media (max-width: 360px) {
   .session-exercise-heading > .exercise-glyph {
     display: none;
+  }
+}
+
+.manual-rest {
+  min-height: 44px;
+  margin-bottom: 12px;
+}
+@media (max-width: 480px) {
+  .rest-timer > div {
+    flex-basis: calc(100% - 50px);
+  }
+  .rest-timer > .text-button {
+    min-height: 44px;
+    flex: 1;
   }
 }

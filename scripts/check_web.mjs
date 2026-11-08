@@ -39,6 +39,25 @@ for(const width of [1440,1024,768,390,320]){
  await page.getByRole('button',{name:'Adicionar série',exact:true}).click();
  assert.equal(await page.locator('.set-row').count(),4);checks++;
  await page.getByRole('button',{name:'Pular descanso',exact:true}).click();assert.equal(await page.getByRole('timer').count(),0);checks++;
+ const beforeRest=await page.evaluate(()=>JSON.parse(localStorage.getItem('onepunch.workspace.v1')));
+ await page.getByRole('button',{name:'Iniciar ou reiniciar descanso de Supino reto',exact:true}).click();
+ const manualRest=await page.evaluate(()=>JSON.parse(localStorage.getItem('onepunch.workspace.v1')));
+ assert(manualRest.active.restUntil>Date.now()+80000);checks++;
+ assert.deepEqual({...manualRest.active,restUntil:null},{...beforeRest.active,restUntil:null});checks++;
+ assert.deepEqual(manualRest.workouts,beforeRest.workouts);checks++;
+ await page.getByRole('button',{name:'Diminuir descanso em 30 segundos',exact:true}).click();
+ const shorter=await page.evaluate(()=>JSON.parse(localStorage.getItem('onepunch.workspace.v1')).active.restUntil);
+ assert.equal(shorter,manualRest.active.restUntil-30000);checks++;
+ await page.getByRole('button',{name:'+30 s',exact:true}).click();
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('onepunch.workspace.v1')).active.restUntil),manualRest.active.restUntil);checks++;
+ assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));checks++;
+ await page.screenshot({path:`${output}/manual-rest-${width}.png`,fullPage:true,animations:'disabled'});
+ await page.reload();await page.locator('.resume-card').click();
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('onepunch.workspace.v1')).active.restUntil),manualRest.active.restUntil);checks++;
+ for(let step=0;step<3;step++) await page.getByRole('button',{name:'Diminuir descanso em 30 segundos',exact:true}).click();
+ assert.equal(await page.getByRole('timer').count(),0);checks++;
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('onepunch.workspace.v1')).active.restUntil),null);checks++;
+
  await page.screenshot({path:`${output}/session-${width}.png`,fullPage:true,animations:'disabled'});
  await page.getByRole('button',{name:'Finalizar treino',exact:true}).click();
  await page.getByRole('button',{name:'Salvar treino',exact:true}).click();

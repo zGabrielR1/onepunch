@@ -48,6 +48,8 @@ import {
   startWorkout,
   addExercise,
   toggleSet,
+  adjustRest,
+  startRest,
   finishWorkout,
   mergeSynced,
   fmt,
@@ -1345,11 +1347,15 @@ function App() {
                   </div>
                   <button
                     className="text-button"
+                    aria-label="Diminuir descanso em 30 segundos"
+                    onClick={() => updateActive((a) => adjustRest(a, -30))}
+                  >
+                    −30 s
+                  </button>
+                  <button
+                    className="text-button"
                     onClick={() =>
-                      updateActive((a) => ({
-                        ...a,
-                        restUntil: a.restUntil + 30000,
-                      }))
+                      updateActive((a) => adjustRest(a, 30))
                     }
                   >
                     +30 s
@@ -1393,6 +1399,14 @@ function App() {
                           <X size={19} />
                         </button>
                       </div>
+                      <button
+                        className="text-button manual-rest"
+                        disabled={Number(spec.restSeconds) <= 0}
+                        aria-label={"Iniciar ou reiniciar descanso de " + e.name}
+                        onClick={() => updateActive((a) => startRest(a, e.id))}
+                      >
+                        <Timer size={16} /> Iniciar descanso · {spec.restSeconds}s
+                      </button>
                       {isAssisted(e.id) ? (
                         <p className="validation-message">
                           Registre kg de assistência da máquina. Estas séries contam no histórico,

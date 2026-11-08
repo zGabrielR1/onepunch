@@ -1,0 +1,29 @@
+{
+  "version": "1.0.0-rc.2",
+  "prerelease": true,
+  "android_version_code": 5,
+  "commit": "2d6cc0c1a92d9f7b4784173f3359243d65c51cec",
+  "workflow": "https://github.com/zGabrielR1/onepunch/actions/runs/42514502860",
+  "android_variant": "release",
+  "android_jvm": {
+    "tests": 77,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "go_race_tests": 4,
+  "browser_workflow_checks": 181,
+  "web_domain_tests": "passed before production build",
+  "android_device_ui": "pending; exact-artifact device QA required before stable promotion",
+  "apk_signing": {
+    "kind": "owner release certificate",
+    "certificate_sha256": "37fae99f455f4022da3391d1c51f6d6ba72a224e8d25697624faea2023a38489"
+  },
+  "assets": {
+    "onepunch-v1.0.0-rc.2-linux-amd64.tar.gz": "25c37d94583939de094c7e2a018da13b07fa656a3ac4e5f4a59b6404ae341e94",
+    "onepunch-v1.0.0-rc.2.apk": "00e05487425e86aea3ccbfe98ad5e365c813eb71d54cc26a57f1f09679f68732"
+  },
+  "build_location": "GitHub-hosted Ubuntu runner; no local native compilation",
+  "release_url": "https://github.com/zGabrielR1/onepunch/releases/tag/v1.0.0-rc.2",
+  "downloaded_checksums_verified": true
+}

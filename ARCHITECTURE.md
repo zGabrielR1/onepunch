@@ -217,7 +217,9 @@ tests, production build, Go race checks and 233 browser assertions on 2026-11-08
 The browser run used disposable real API data and isolated profiles; all 53 recorded
 source hashes matched at review. Both host jobs enforced 3 GiB/no swap. See
 `docs/qa/v1_0_0_rc_2_automated.json` for exact evidence and debug APK hash.
-Fresh signed-release candidate and exact-artifact physical-device QA are still
+Signed RC.2 for commit `2d6cc0c1a92d9f7b4784173f3359243d65c51cec` passed hosted
+run 42514502860 and was published as a prerelease; downloaded checksums and source
+identity passed. Evidence: `docs/qa/v1_0_0_rc_2_signed.json`. Exact-artifact physical-device QA is still
 required. Browser screenshots and JVM results are not Android device UI evidence.
 
 ## Unreleased native additions

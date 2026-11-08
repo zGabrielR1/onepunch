@@ -109,6 +109,17 @@ export function toggleSet(active, setId, now = Date.now()) {
         : null,
   };
 }
+// Deadlines use click time, including the interval before the next UI tick.
+export function adjustRest(active, seconds, now = Date.now()) {
+  if (!active.restUntil || ![-30, 30].includes(seconds)) return active;
+  const deadline = Math.max(active.restUntil, now) + seconds * 1000;
+  return { ...active, restUntil: deadline > now ? deadline : null };
+}
+export function startRest(active, exerciseId, now = Date.now()) {
+  const seconds = Number(active.exercises.find((e) => e.exerciseId === exerciseId)?.restSeconds);
+  if (!Number.isInteger(seconds) || seconds <= 0 || seconds > 600) return active;
+  return { ...active, restUntil: now + seconds * 1000 };
+}
 export function finishWorkout(state, now = Date.now()) {
   if (!state.active) return state;
   if (state.workouts.some((workout) => workout.id === state.active.id))

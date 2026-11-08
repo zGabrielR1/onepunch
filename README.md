@@ -12,7 +12,7 @@ signing/upgrade work, device QA gates and delivery checklist.
 See [release operations](docs/RELEASE_OPERATIONS.md) for signed hosted candidates
 and exact-artifact promotion, and [readiness status](docs/RELEASE_STATUS.md) for
 the client capability inventory and open release blockers. The source is now a
-1.0.0-rc.2 candidate; its signed prerelease publication is being prepared.
+1.0.0-rc.3 candidate; the preceding RC.2 [signed prerelease is available](https://github.com/zGabrielR1/onepunch/releases/tag/v1.0.0-rc.2). Exact-artifact Android device QA remains pending.
 
 ## What works
 

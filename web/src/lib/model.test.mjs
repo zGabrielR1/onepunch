@@ -4,6 +4,8 @@ import {
   emptyState,
   startWorkout,
   toggleSet,
+  adjustRest,
+  startRest,
   finishWorkout,
   validSet,
   volume,
@@ -238,5 +240,26 @@ test("sync detects changes in finished set values, ordering and workout metadata
     assert.throws(() => mergeSynced(state, {
       routines: [], workouts: [{ ...original, ...change }],
     }), /Conflito no histórico/);
+  }
+});
+
+test("manual rest and adjustments preserve workout inputs, identity and completed sets", () => {
+  const active = startWorkout(routine, [], 1000);
+  active.sets[0].weight = "20,";
+  const started = startRest(active, "squat", 2000);
+  assert.equal(started.restUntil, 92000);
+  assert.equal(startRest(started, "squat", 5000).restUntil, 95000);
+  assert.equal(adjustRest(started, -30, 3000).restUntil, 62000);
+  assert.equal(adjustRest(started, 30, 100000).restUntil, 130000);
+  assert.equal(adjustRest(started, -30, 100000).restUntil, null);
+  assert.equal(adjustRest({ ...started, restUntil: 32000 }, -30, 3000).restUntil, null);
+  const restored = readState(JSON.stringify({ ...emptyState([]), active: started }), []);
+  assert.equal(restored.active.restUntil, 92000);
+  assert.deepEqual({ ...started, restUntil: null }, active);
+  assert.equal(adjustRest(active, 30, 3000), active);
+  assert.equal(startRest(active, "unknown", 3000), active);
+  for (const seconds of [0, -1, 1.5, 601]) {
+    const disabled = { ...active, exercises: [{ ...active.exercises[0], restSeconds: seconds }] };
+    assert.equal(startRest(disabled, "squat", 3000), disabled);
   }
 });

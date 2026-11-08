@@ -9,7 +9,7 @@ publication is included.
 
 RC.2 contains 100 exercises and 17 templates plus assistance metrics, immutable
 finished-history and web recovery fixes. The product tree was verified with changes based on `cfdc351`; signed RC.2
-publication is now explicitly authorized but has not yet run.
+publication completed in [run 42514502860](https://github.com/zGabrielR1/onepunch/actions/runs/42514502860) for `2d6cc0c1a92d9f7b4784173f3359243d65c51cec`. The [signed RC.2 prerelease](https://github.com/zGabrielR1/onepunch/releases/tag/v1.0.0-rc.2) is available; downloaded asset checksums and source identity passed. Hosted checks passed 77 release JVM tests, 21 release-tooling tests, four Go race tests and 181 browser workflow assertions, plus web checks/build, certificate identity and Linux-bundle smoke checks.
 
 Automated verification is complete for this development source:
 
@@ -28,8 +28,8 @@ Automated verification is complete for this development source:
 
 Durable evidence summary: [RC.2 automated QA](qa/v1_0_0_rc_2_automated.json).
 This does not establish signed-release artifact identity or Android device UI QA.
-Fresh signed-candidate, exact-artifact physical-device QA and independent signing
-key backup remain required before final promotion.
+The signed candidate is verified. Exact-artifact physical-device QA and independent signing
+key backup remain required before final promotion. See `qa/v1_0_0_rc_2.json`.
 
 ## Client support inventory
 
