@@ -209,7 +209,11 @@ is necessary before browser offline reload works. Native assets are bundled in
 the APK and require no initial connection. Routine/catalog changes require client
 rebuilds; changing the display brand preserves storage/application identity.
 
-## Current verification boundary
+## RC.3 web rest controls
+
+The web supports manual start/restart using the selected exercise rest interval, disabled at zero seconds. Thirty-second adjustments preserve all workout data and use click time for expired deadlines; shortening to zero clears restUntil. Controls wrap on narrow screens. Signed hosted run 42521634710 passed 77 JVM tests, 17 web tests and 226 browser assertions plus release-tooling, Go race, identity and bundle smoke checks. Downloaded checksums passed. See `docs/qa/v1_0_0_rc_3_signed.json`. Physical-device QA remains pending; RC.3 publication was skipped.
+
+## RC.2 verification boundary
 
 RC.2 development source (uncommitted changes based on cfdc351) passed local
 Android debug compilation and 77 JVM tests, plus 16 web tests, 13 release-tooling

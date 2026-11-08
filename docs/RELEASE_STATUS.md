@@ -5,7 +5,11 @@ application/storage identity remains stable. Distribution target is the existing
 private GitHub APK and Linux amd64 bundle channel. No account hosting or store
 publication is included.
 
-## Current source — 2026-11-08
+## Current source — RC.3, 2026-11-08
+
+RC.3/code6 adds web manual rest start/restart and shortening, fixes expired timer extension and wraps narrow-screen controls. Signed [run 42521634710](https://github.com/zGabrielR1/onepunch/actions/runs/42521634710) for `2fc88ad39de104cba15a280a40e95f60f1596e3e` passed 77 JVM tests, 21 release-tooling tests, 17 web tests, four Go race tests, production build and 226 browser assertions. Downloaded candidate checksums and source identity passed. The 320px timer screenshot was reviewed. See `qa/v1_0_0_rc_3_signed.json`; device QA remains pending in `qa/v1_0_0_rc_3.json`. RC.3 is retained as a candidate Actions artifact; its publication job was skipped.
+
+## Published RC.2 — 2026-11-08
 
 RC.2 contains 100 exercises and 17 templates plus assistance metrics, immutable
 finished-history and web recovery fixes. The product tree was verified with changes based on `cfdc351`; signed RC.2
@@ -43,7 +47,8 @@ RC.1 run does not verify RC.2.
 | Incomplete active inputs/completed sets/rest deadline recovery | Yes | Yes |
 | Editable templates and routine editor | Yes | Yes |
 | Recoverable routine draft, duplication/archive/restore | Yes | No complete lifecycle/draft parity |
-| Active exercise order/replacement, manual rest start/shorten | Yes | Not at native parity |
+| Active exercise order/replacement | Yes | Not at native parity |
+| Manual rest start/restart and shorten/extend | Yes | Yes, RC.3 |
 | Finish review/history/recorded-load metrics | Yes | Yes; narrower review flow |
 | History search/date filters and workout replay | Yes | Not at native parity |
 | JSON backup/import and pre-restore safety copy | Yes | No UI |

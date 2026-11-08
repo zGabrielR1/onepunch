@@ -1,3 +1,12 @@
+CURRENTTASK: RC.3 signed candidate built and verified; device QA pending.
+
+RC.3 signed candidate verified: run 42521634710 for 2fc88ad39de104cba15a280a40e95f60f1596e3e passed signed release compilation, 77 JVM tests (zero failures/errors/skips), 21 release-tooling tests, 17 domain/catalog tests, production build, four Go race tests, 226 browser workflow assertions and extracted Linux-bundle smoke checks. Downloaded all artifacts; five checksum entries passed and source/version/release variant matched. Reviewed manual-rest-320.png: timer buttons wrap and inputs remain visible without horizontal clipping.
+Files: build/signed-42521634710/onepunch-signed-candidate-42521634710/.
+Evidence: docs/qa/v1_0_0_rc_3_signed.json; pending device report: docs/qa/v1_0_0_rc_3.json.
+No RC.3 publication or device installation. Next: exact-artifact device QA and independent signing-key backup confirmation; candidate available from the successful Actions run.
+
+Historical entries follow.
+
 CURRENTTASK: RC.3 rest-control improvements prepared; signed hosted verification pending.
 
 RC.3/code6 prepared: web manual rest start/restart, −30-second adjustment, expired-deadline extension correction and wrapping narrow-screen controls. Pure domain preserves inputs/sets/history; browser harness adds 45 assertions at five widths for adjustments, persistence and layout. Light checks pass 17 tests; 21 release-tooling tests pass; JS syntax and release identity pass. Signed hosted verification pending; no RC.3 publication/device installation. RC.2 shipment evidence retained below.

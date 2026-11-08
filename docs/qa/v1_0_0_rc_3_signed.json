@@ -1,0 +1,30 @@
+{
+  "version": "1.0.0-rc.3",
+  "prerelease": true,
+  "android_version_code": 6,
+  "commit": "2fc88ad39de104cba15a280a40e95f60f1596e3e",
+  "workflow": "https://github.com/zGabrielR1/onepunch/actions/runs/42521634710",
+  "android_variant": "release",
+  "android_jvm": {
+    "tests": 77,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "go_race_tests": 4,
+  "browser_workflow_checks": 226,
+  "web_domain_tests": "passed before production build",
+  "android_device_ui": "pending; exact-artifact device QA required before stable promotion",
+  "apk_signing": {
+    "kind": "owner release certificate",
+    "certificate_sha256": "37fae99f455f4022da3391d1c51f6d6ba72a224e8d25697624faea2023a38489"
+  },
+  "assets": {
+    "onepunch-v1.0.0-rc.3-linux-amd64.tar.gz": "803fe7b67f61a609dee206511be2c3d6ba74e6ec513451d484476716c2bc29bf",
+    "onepunch-v1.0.0-rc.3.apk": "1e0a899e37acd227e4e30d0b7f41f471971b1e466f9a61cde8f022005f2d4000"
+  },
+  "build_location": "GitHub-hosted Ubuntu runner; no local native compilation",
+  "downloaded_checksums_verified": true,
+  "screenshot_review": "manual-rest-320.png: timer and controls fit; inputs and completion controls visible without horizontal clipping",
+  "publication": "not requested for this verification run; publication job skipped"
+}
